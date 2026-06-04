@@ -21,6 +21,12 @@ yarn-error.log*
 logs/
 *.log
 
+# ...but DO track our hand-written project journal in LOGS/ (learning + failures
+# notes). The generic "logs/" rule above otherwise hides it on case-insensitive
+# filesystems like Windows.
+!LOGS/
+!LOGS/**
+
 # Editor / OS
 .vscode/*
 !.vscode/extensions.json
@@ -31,3 +37,9 @@ Thumbs.db
 # Misc
 coverage/
 .cache/
+
+# Private notes — local only, never pushed (personal prep material)
+prep/
+
+# AI assistant project brief — kept local, not part of the public repo
+CLAUDE.md
