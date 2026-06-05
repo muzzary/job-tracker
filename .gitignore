@@ -43,3 +43,6 @@ prep/
 
 # AI assistant project brief — kept local, not part of the public repo
 CLAUDE.md
+
+# Knowledge graph — generated build output, kept local for context/navigation
+graphify-out/

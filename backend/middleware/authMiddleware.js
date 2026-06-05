@@ -1,21 +1,37 @@
-import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 
-// PLACEHOLDER auth middleware for Phase 2.
+// Real JWT auth guard (Phase 3).
 //
-// In Phase 3 this file will verify a real JWT from the request header and
-// attach the logged-in user to req.user. For now we just attach a fixed
-// placeholder user id so the job CRUD routes can be built and tested before
-// authentication exists.
-//
-// IMPORTANT: this lets every request through. It MUST be replaced with the
-// real JWT check in Phase 3 before the app is exposed to real users.
+// Any protected route runs this first. It checks for a valid token in the
+// "Authorization" header, and if the token is good it attaches the user's id to
+// req.user so the controllers know who is making the request. If the token is
+// missing or invalid, the request is rejected with 401 (not logged in).
 const protect = (req, res, next) => {
-  // Attach a temporary, valid ObjectId so controllers that read req.user.id
-  // keep working until real auth is wired up.
-  req.user = { id: new mongoose.Types.ObjectId("000000000000000000000001") };
+  // Tokens are sent as: "Authorization: Bearer <token>".
+  const authHeader = req.headers.authorization;
 
-  // Let the request continue to the controller.
-  next();
+  // If there is no Bearer token, the user is not logged in.
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Not authorized, no token" });
+  }
+
+  // Take the part after "Bearer ".
+  const token = authHeader.split(" ")[1];
+
+  try {
+    // Verify the token's signature and expiry using our secret.
+    // If it was tampered with or has expired, this throws.
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Attach the user's id (set when the token was signed) to the request.
+    req.user = { id: decoded.id };
+
+    // Token is valid - let the request continue to the controller.
+    next();
+  } catch (error) {
+    // Bad signature, expired, or malformed token.
+    return res.status(401).json({ message: "Not authorized, token failed" });
+  }
 };
 
 export default protect;
