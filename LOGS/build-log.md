@@ -96,4 +96,75 @@ string that lists the shard hosts directly and needs no SRV/TXT lookup.
 
 ---
 
+## Phase 3 — JWT auth & API security
+
+**Goal:** Let users register and log in, hash their passwords, hand out JWT tokens,
+protect the job routes with a real token check, and harden the API.
+
+### What was built
+
+| File | What it does |
+|------|--------------|
+| `backend/controllers/authController.js` | `register` (hash + create + token) and `login` (verify + token). |
+| `backend/routes/authRoutes.js` | `POST /register`, `POST /login` with validation + rate limiting. |
+| `backend/middleware/authMiddleware.js` | **Replaced** the placeholder with real JWT verification. |
+| `backend/server.js` | Added `helmet`, wired the auth routes. |
+
+### How & why — decision by decision
+
+**1. Passwords hashed with bcrypt before saving (`genSalt(10)` + `hash`).**
+*Why:* We must never store plain-text passwords. bcrypt adds a random salt and is
+deliberately slow, so even if the database leaks, the passwords are very hard to
+crack. `10` salt rounds is the standard balance of safety vs. speed.
+
+**2. JWT returned on register and login, signed with `JWT_SECRET`, expires in 7 days.**
+*Why:* After logging in, the client needs a way to prove who it is on every later
+request without sending the password each time. The token is signed so it can't be
+forged, and the expiry limits the damage if a token is ever stolen.
+
+**3. The token only stores the user's `id` (`jwt.sign({ id }, ...)`).**
+*Why:* Keep the token small and avoid putting sensitive data in it. The middleware
+later reads this id back out and the controllers use it to scope data to the owner.
+
+**4. Login uses one generic "Invalid email or password" for both failures.**
+*Why:* If we said "email not found" vs "wrong password", an attacker could learn
+which emails have accounts. The same message for both leaks nothing. We also still
+run bcrypt.compare logic carefully so the path is consistent.
+
+**5. `authMiddleware.js` now verifies a real `Bearer <token>` and sets `req.user.id`.**
+*Why:* This is the actual auth guard. It reads the `Authorization` header, verifies
+the token signature + expiry, and rejects with `401` if missing/invalid. The Phase 2
+placeholder (which let everyone through with a fixed id) is gone. The job routes did
+not need to change — they already read `req.user.id`, which is now the real user.
+
+**6. Rate limiting on the auth routes (`express-rate-limit`, 10 / 15 min per IP).**
+*Why:* Login/register are the most brute-forced endpoints. Capping attempts per IP
+slows password-guessing attacks. Only the auth routes are limited (they're the target).
+
+**7. `helmet()` added as the first middleware.**
+*Why:* It sets a bundle of safe HTTP security headers (CSP, HSTS, X-Frame-Options,
+X-Content-Type-Options, etc.) with one line, protecting against common web attacks.
+First in the chain so every response — even errors — gets the headers.
+
+**8. `JWT_SECRET` is a long random string in `.env` (never committed).**
+*Why:* Anyone who knows the secret can forge tokens, so it must be long, random, and
+private. A real 64-char value lives in local `.env`; `.env.example` only shows a
+placeholder.
+
+### How it was verified (live, end-to-end)
+- Register → returned a token.
+- `GET /jobs` **without** a token → `401 Not authorized, no token`.
+- `GET /jobs` **with** the token → `200`, and the brand-new user saw **0 jobs**
+  (proof the middleware now scopes by the real user id from the JWT, not a placeholder).
+- Login with the correct password → token; with a wrong password → `401`.
+- Duplicate email register → `400`; password under 6 chars → `400` validation error.
+- Confirmed `helmet` security headers present on responses.
+- Created a job with a token → it was owned by that user's real `_id`.
+
+### Done this phase
+- ✅ Register/login, bcrypt hashing, JWT, real auth guard, rate limiting, and helmet.
+- Commit: `feat: implement JWT auth and API security`.
+
+---
+
 <!-- Add the next phase/entry below this line using the same format. -->
