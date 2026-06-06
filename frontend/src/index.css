@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base, brand-wide styles. Tailwind handles 90% of styling in the components;
+   this file only sets the things that should apply everywhere. */
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-moonlight text-ink font-sans;
+  }
+
+  /* Numbers (stats, counts) use the mono font and tighter spacing so columns
+     of figures line up like a spreadsheet. */
+  .tabular {
+    @apply font-mono tabular-nums tracking-tight;
+  }
+
+  /* Consistent focus ring for keyboard users across the whole app. */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ateneo/60 ring-offset-2 ring-offset-moonlight;
+  }
+}
+
+@layer components {
+  /* Reusable building blocks kept as component classes so the markup stays
+     readable and every button/input looks the same across screens. */
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
+      text-sm font-semibold transition-all duration-200
+      active:translate-y-px active:scale-[0.98]
+      disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-primary {
+    @apply btn bg-ateneo text-white shadow-sm hover:bg-ateneo-600;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-ink/70 hover:bg-ink/5 hover:text-ink;
+  }
+
+  .btn-outline {
+    @apply btn border border-polar bg-white text-ink hover:border-ateneo/40 hover:bg-ateneo-50;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-polar bg-white px-3.5 py-2.5 text-sm
+      text-ink placeholder:text-ink/35 transition-colors
+      focus:border-ateneo focus:ring-0;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink/80;
+  }
+
+  .field-error {
+    @apply mt-1 text-xs font-medium text-coral;
+  }
+
+  /* Frosted top bar. Subtle inner highlight gives a real "glass edge" feel
+     rather than a flat blur. */
+  .glass {
+    @apply bg-moonlight/80 backdrop-blur-md
+      shadow-[inset_0_-1px_0_rgba(19,24,27,0.06)];
+  }
+}
+
+/* Skeleton shimmer used by loading states (a moving light sweep). */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(204, 213, 218, 0.45);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Thin, unobtrusive scrollbars for the horizontal Kanban board. */
+.scroll-slim::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: rgba(204, 213, 218, 0.9);
+  border-radius: 9999px;
+}
+.scroll-slim::-webkit-scrollbar-track {
+  background: transparent;
+}

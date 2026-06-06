@@ -167,4 +167,101 @@ placeholder.
 
 ---
 
+## Phase 4 — React dashboard with Kanban board
+
+**Goal:** Build the whole front end: login/register, a protected dashboard, and a
+Kanban board where the user adds, edits, moves, and deletes job applications.
+
+### What was built
+
+| Area | Files |
+|------|-------|
+| Styling | Tailwind v3 (`tailwind.config.js`, `postcss.config.js`, `src/index.css`) configured with the brand "Spaceship" palette + Outfit/JetBrains Mono fonts. |
+| App shell | `main.jsx` (BrowserRouter + AuthProvider), `App.jsx` (routes + redirects), `index.html` (fonts, favicon). |
+| Auth state | `context/AuthContext.jsx` (Context API), `api/axios.js` (JWT request + 401 response interceptors). |
+| Pages | `pages/Login.jsx`, `pages/Register.jsx`, `pages/Dashboard.jsx`. |
+| Components | `Logo`, `Navbar`, `AuthLayout`, `ProtectedRoute`, `StatsBar`, `KanbanBoard`, `KanbanColumn`, `JobCard`, `AddJobModal`, `ConfirmDialog`, `icons` (inline SVG). |
+| Shared | `constants/jobStatus.js` (the 5 stages + their colours, defined once). |
+
+### How & why — decision by decision
+
+**1. Styling with Tailwind, configured around the brand palette.**
+*Why:* The palette ("Spaceship") and logo colours live in `tailwind.config.js` as
+named colours (ateneo blue, buckthorn amber, coral, etc.), so every screen stays
+on-brand and a colour changes in one place. Components are still written by hand
+(no UI library) so they remain explainable.
+
+**2. Context API for auth (not Redux).**
+*Why:* The whole app only needs to share one thing globally — the logged-in user.
+`AuthContext` exposes `user`, `login`, `register`, `logout`. A custom `useAuth()`
+hook keeps components tidy. The token + user are mirrored into `localStorage` so a
+refresh keeps you logged in.
+
+**3. Two axios interceptors.**
+*Why:* A request interceptor attaches the JWT to every call automatically. A
+response interceptor catches `401` (expired/invalid token), clears the session,
+and bounces the user to login — except on the auth routes themselves, where a 401
+just means "wrong password" and is shown inline.
+
+**4. Protected + public-only routes.**
+*Why:* `ProtectedRoute` redirects logged-out users away from the dashboard;
+`PublicOnly` redirects logged-in users away from login/register. The backend still
+enforces auth independently on every API call — the front-end guard is just UX.
+
+**5. One source of truth for the statuses (`constants/jobStatus.js`).**
+*Why:* The board columns, the stats strip, the card badges, and the add/edit form
+all read the same five stages and their colours. The values match the backend
+`status` enum exactly, so the UI can never drift from the database.
+
+**6. The Dashboard owns all the data; children are presentational.**
+*Why:* `Dashboard` holds the `jobs` array and the CRUD handlers, then passes slices
++ callbacks down to the board. One source of truth means the stats, columns, and
+cards never disagree. `useMemo` powers the search filter without re-filtering on
+every render.
+
+**7. Kanban moves use native HTML5 drag-and-drop (no library).**
+*Why:* Cards are `draggable`; columns are drop targets. On drop, the column tells
+the dashboard to change that job's status. Moves are **optimistic** — the UI
+updates instantly, then saves; if the save fails it rolls back and shows a toast.
+A status dropdown on each card does the same move for touch devices.
+
+**8. Full set of UI states (loading / empty / error).**
+*Why:* Good apps handle more than the happy path. The board shows skeleton loaders
+while fetching, a composed empty state when you have no jobs, a retryable error
+state if the API is down, and per-column empty states that invite adding a card.
+
+**9. Add/edit in one modal; delete behind a confirm dialog.**
+*Why:* `AddJobModal` handles both creating and editing (driven by an `editingJob`
+prop) with client-side validation that mirrors the backend rules. Destructive
+deletes go through `ConfirmDialog` so nothing is removed by accident.
+
+### How it was verified (live, with screenshots)
+- Ran the backend + the Vite dev server together.
+- Captured the **login** and **register** pages: split-screen brand panel renders,
+  forms validate, show/hide password works.
+- Registered a demo user via the API, created six sample jobs across all five
+  stages, then loaded the **dashboard** with a real session: the navbar, stats
+  strip (Total 6 + per-stage counts), and all five Kanban columns rendered the
+  cards correctly with dates, posting links, notes, and the move dropdown.
+- `npm run build` compiles cleanly (103 modules, no errors).
+
+### Follow-up - auth hardening (found while testing)
+Testing surfaced that a token kept working after its account was deleted (the
+"still logged in after clearing the DB" problem). We hardened auth:
+- the middleware now looks the user up after verifying the token and rejects the
+  request if the user no longer exists;
+- added `GET /api/auth/me` (protected) so the client can validate a saved session;
+- the frontend `AuthContext` calls `/auth/me` on startup and logs out a stale
+  session instead of trusting `localStorage` blindly.
+Full write-up in `failures-and-fixes.md` (Failure #3); tests in `testing-log.md`
+(F.1a-F.1e). We also confirmed duplicate names are allowed on purpose (email is the
+unique identity), so no change there.
+
+### Done this phase
+- ✅ Full React front end: auth pages, protected dashboard, Kanban CRUD, brand styling.
+- ✅ Auth hardened so deleted/cleared accounts are logged out.
+- Commit: `feat: complete React dashboard with Kanban board`.
+
+---
+
 <!-- Add the next phase/entry below this line using the same format. -->

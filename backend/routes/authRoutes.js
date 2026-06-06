@@ -1,7 +1,8 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
 import { body } from "express-validator";
-import { register, login } from "../controllers/authController.js";
+import { register, login, getMe } from "../controllers/authController.js";
+import protect from "../middleware/authMiddleware.js";
 
 // This file maps the auth URLs to controller functions. No logic lives here.
 const router = express.Router();
@@ -37,5 +38,9 @@ const loginValidation = [
 // The rate limiter runs first, then validation, then the controller.
 router.post("/register", authLimiter, registerValidation, register);
 router.post("/login", authLimiter, loginValidation, login);
+
+// GET /me is protected (needs a valid token) and is NOT rate-limited, because
+// the frontend calls it on every page load to validate the saved session.
+router.get("/me", protect, getMe);
 
 export default router;

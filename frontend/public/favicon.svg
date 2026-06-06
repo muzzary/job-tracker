@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#003A6C" />
+  <!-- Upward growth arrow: a rising line with an arrowhead, the brand's
+       "career journey" mark, in amber + coral. -->
+  <path d="M7 21L13 15L17 19L25 11" stroke="#FFBF65" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M20 11H25V16" stroke="#FD8973" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

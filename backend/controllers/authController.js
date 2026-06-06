@@ -50,6 +50,17 @@ export const register = async (req, res) => {
   }
 };
 
+// GET /api/auth/me
+// Return the currently logged-in user. The auth middleware has already verified
+// the token AND confirmed the user still exists, attaching it to req.user. The
+// frontend calls this on startup to check a saved session is still valid (e.g.
+// it rejects a token whose account was deleted).
+export const getMe = async (req, res) => {
+  res.json({
+    user: { id: req.user.id, name: req.user.name, email: req.user.email },
+  });
+};
+
 // POST /api/auth/login
 // Check the email + password and, if they match, return a token.
 export const login = async (req, res) => {
