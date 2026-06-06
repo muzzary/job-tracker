@@ -77,4 +77,36 @@ Format for every entry:
 
 ---
 
+## Failure #3 - Stale session: still "logged in" after the account was deleted
+
+- **Phase:** 4 (found while manually testing the dashboard)
+- **What happened:**
+  After we cleared the database, refreshing the app still showed the user as
+  logged in, and API calls still succeeded. A token belonging to a user that no
+  longer existed kept working.
+- **Why it happened:**
+  Two layers both trusted the token too much:
+  1. **Backend:** the auth middleware called `jwt.verify()`, which only checks the
+     token's signature and expiry - it never checked whether that user still
+     exists. So `GET /jobs` returned `200 []` even for a deleted user.
+  2. **Frontend:** `AuthContext` seeded the user from `localStorage` on startup and
+     never re-validated it with the server, so a refresh always looked logged in.
+  This is normal for stateless JWTs, but for this app we want a deleted/cleared
+  account to be logged out promptly.
+- **How we fixed it:**
+  1. The middleware now looks the user up after verifying the token; if the user
+     is gone it returns `401` ("user no longer exists").
+  2. Added a `GET /api/auth/me` endpoint (protected, not rate-limited).
+  3. The frontend calls `/auth/me` once on startup; if it fails it clears the
+     saved token/user and drops the person back to the login page.
+  Re-tested: a token for a deleted user now returns `401` on both `/jobs` and
+  `/auth/me` (see `testing-log.md`, F.1a-F.1e).
+- **Lesson:**
+  A JWT only proves a token was once issued and hasn't expired - it does NOT prove
+  the account still exists. If "deleted user must be logged out" matters, verify
+  the user against the database (or keep a token denylist), and have the client
+  re-validate its saved session on startup instead of blindly trusting storage.
+
+---
+
 <!-- Add the next failure below this line using the same format. -->
