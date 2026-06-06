@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 dotenv.config();
 
@@ -27,15 +29,17 @@ app.get("/api/health", (req, res) => {
 });
 
 // Routes
-// Auth routes (Phase 3): register + login.
+// Auth routes (Phase 3): register + login + me.
 app.use("/api/auth", authRoutes);
 // Job CRUD routes (Phase 2).
 app.use("/api/jobs", jobRoutes);
+// User routes (Phase 5): resume upload/fetch.
+app.use("/api/users", userRoutes);
+// AI routes (Phase 5): resume-to-job matcher.
+app.use("/api/ai", aiRoutes);
 
-// Wired up in later phases:
-// import aiRoutes from "./routes/aiRoutes.js";
+// Wired up in a later phase:
 // import statsRoutes from "./routes/statsRoutes.js";
-// app.use("/api/ai", aiRoutes);
 // app.use("/api/stats", statsRoutes);
 
 app.listen(PORT, () => {

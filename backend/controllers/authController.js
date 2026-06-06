@@ -14,6 +14,17 @@ const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
+// Shape the safe, public view of a user for API responses. We never send the
+// password hash, and we send the resume as a simple "do they have one + when"
+// flag rather than the whole text (the frontend fetches the text separately).
+const toPublicUser = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  hasResume: Boolean(user.resume),
+  resumeUpdatedAt: user.resumeUpdatedAt || null,
+});
+
 // POST /api/auth/register
 // Create a new account, then return a token so the user is logged in right away.
 export const register = async (req, res) => {
@@ -43,7 +54,7 @@ export const register = async (req, res) => {
     // Return a token plus the safe user fields (never the password hash).
     res.status(201).json({
       token: generateToken(user._id),
-      user: { id: user._id, name: user.name, email: user.email },
+      user: toPublicUser(user),
     });
   } catch (error) {
     res.status(500).json({ message: "Registration failed", error: error.message });
@@ -56,9 +67,13 @@ export const register = async (req, res) => {
 // frontend calls this on startup to check a saved session is still valid (e.g.
 // it rejects a token whose account was deleted).
 export const getMe = async (req, res) => {
-  res.json({
-    user: { id: req.user.id, name: req.user.name, email: req.user.email },
-  });
+  // The middleware verified the token; re-read the user so we include the latest
+  // resume status (which can change after the token was issued).
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    return res.status(401).json({ message: "Not authorized, user no longer exists" });
+  }
+  res.json({ user: toPublicUser(user) });
 };
 
 // POST /api/auth/login
@@ -90,7 +105,7 @@ export const login = async (req, res) => {
     // Credentials are good - send back a fresh token.
     res.json({
       token: generateToken(user._id),
-      user: { id: user._id, name: user.name, email: user.email },
+      user: toPublicUser(user),
     });
   } catch (error) {
     res.status(500).json({ message: "Login failed", error: error.message });

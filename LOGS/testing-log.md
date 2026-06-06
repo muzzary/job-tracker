@@ -85,6 +85,25 @@ and adding `GET /api/auth/me` + a frontend startup check:
 
 ---
 
+## Phase 5 - AI resume matcher (2026-06-06)
+
+Backend tested against the live API + real OpenRouter; UI driven with a headless
+browser (puppeteer) for screenshots.
+
+| # | What we tested | How | Expected | Result |
+|---|----------------|-----|----------|--------|
+| 5.1 | Backend boots with new routes | `node server.js` (pdf-parse ESM import) | starts, no crash | ✅ |
+| 5.2 | Resume upload (PDF -> text) | `POST /api/users/resume` with a PDF | `200` "Resume saved" + character count | ✅ |
+| 5.3 | Resume status on `/auth/me` | `GET /api/auth/me` after upload | `hasResume: true` + `resumeUpdatedAt` | ✅ |
+| 5.4 | `jobDescription` saved on create | `POST /api/jobs` with a description | description persisted on the job | ✅ (after fixing the controller) |
+| 5.5 | AI match (real OpenRouter) | `POST /api/ai/match` with a jobId | `200` + score, missingSkills, summary saved on the job | ✅ (score 65; skills Docker/AWS/TS/GraphQL/CI-CD) |
+| 5.6 | Guard: no resume | score a job with no resume on file | `400` "upload your resume first" | ✅ |
+| 5.7 | Guard: free tier busy | model returns 429 | falls back across models; else friendly "busy" message | ✅ |
+| 5.8 | pdf-parse retry | parse the same PDF repeatedly | transient failures ride through the retry | ✅ |
+| 5.9 | UI: dashboard score badge | load dashboard with a scored job | card shows the AI score badge | ✅ |
+| 5.10 | UI: AI matcher modal | click a card's score | modal shows score ring + summary + skill chips | ✅ |
+| 5.11 | UI: resume modal | open from the profile dropdown | shows "Resume on file" + Replace button | ✅ |
+
 ## Not yet covered (planned)
 
 - Automated tests with **Jest + Supertest** (Phase 5.5) - at least one success +

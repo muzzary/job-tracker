@@ -32,7 +32,8 @@ export const createJob = async (req, res) => {
 
   try {
     // Pull the allowed fields off the request body.
-    const { company, role, jobUrl, status, dateApplied, notes } = req.body;
+    const { company, role, jobUrl, status, dateApplied, notes, jobDescription } =
+      req.body;
 
     // Build the new job. We set userId from the token, never from the body,
     // so a user cannot create jobs for someone else.
@@ -44,6 +45,7 @@ export const createJob = async (req, res) => {
       status,
       dateApplied,
       notes,
+      jobDescription,
     });
 
     // 201 means "created".

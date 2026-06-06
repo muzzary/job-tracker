@@ -24,7 +24,7 @@ function formatDate(value) {
 // A single job application. It is draggable (native HTML5 drag-and-drop) so the
 // user can drag it between Kanban columns to change its status. A compact status
 // dropdown is also provided so the same move works on touch devices.
-export default function JobCard({ job, index = 0, onEdit, onDelete, onMove }) {
+export default function JobCard({ job, index = 0, onEdit, onDelete, onMove, onScore }) {
   const status = STATUS_MAP[job.status] || STATUS_MAP.Saved;
   const date = formatDate(job.dateApplied);
 
@@ -55,6 +55,15 @@ export default function JobCard({ job, index = 0, onEdit, onDelete, onMove }) {
         {/* Drag affordance + hover actions */}
         <div className="flex shrink-0 items-center">
           <div className="flex items-center opacity-0 transition-opacity group-hover:opacity-100">
+            <button
+              type="button"
+              onClick={() => onScore(job)}
+              className="rounded-lg p-1.5 text-ink/40 hover:bg-ateneo-50 hover:text-ateneo"
+              title="AI resume match"
+              aria-label="Score against resume"
+            >
+              <SparkleIcon className="h-4 w-4" />
+            </button>
             <button
               type="button"
               onClick={() => onEdit(job)}
@@ -100,10 +109,18 @@ export default function JobCard({ job, index = 0, onEdit, onDelete, onMove }) {
             </a>
           )}
           {job.aiScore != null && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-ateneo-50 px-2 py-0.5 font-medium text-ateneo">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onScore(job);
+              }}
+              className="inline-flex items-center gap-1 rounded-full bg-ateneo-50 px-2 py-0.5 font-medium text-ateneo transition-colors hover:bg-ateneo/15"
+              title="View AI match"
+            >
               <SparkleIcon className="h-3.5 w-3.5" />
               <span className="tabular">{job.aiScore}</span>
-            </span>
+            </button>
           )}
         </div>
       )}

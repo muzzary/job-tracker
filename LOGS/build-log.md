@@ -264,4 +264,72 @@ unique identity), so no change there.
 
 ---
 
+## Phase 5 - AI resume matcher (OpenRouter)
+
+**Goal:** Let the user upload their resume once (saved on their profile), then
+score it against any job's description with an AI model, showing a 0-100 match
+score, the skills they're missing, and a short summary.
+
+### What was built
+
+| Area | Files |
+|------|-------|
+| Resume storage | `User.resume` + `resumeUpdatedAt`; `controllers/userController.js` + `routes/userRoutes.js` (multer + pdf-parse) |
+| AI matcher | `controllers/aiController.js` + `routes/aiRoutes.js`; `Job.jobDescription`, `aiScore`, `missingSkills`, `aiSummary`, `aiScoredAt` |
+| Wiring | `/api/users` + `/api/ai` mounted in `server.js`; resume status added to `/auth/me`, login, register |
+| Frontend | `ResumeModal`, `AIMatcherModal` (score ring), navbar profile dropdown, `jobDescription` in `AddJobModal`, "Score" action on `JobCard`, AuthContext `updateUser` |
+
+### How & why - decision by decision
+
+**1. Resume uploaded as a PDF, stored as TEXT on the user.**
+*Why:* The user picked PDF upload. We parse the PDF to plain text with `pdf-parse`
+and store just the text on `User.resume` - no file is ever written to disk (multer
+uses in-memory storage), so there's zero storage cost. The text is reused for every
+job, so the user uploads once and can re-upload an updated CV any time.
+
+**2. pdf-parse imported from its inner lib path + parsed with a retry.**
+*Why:* `pdf-parse` is CommonJS and its package entry runs debug code that crashes
+under ES modules, so we import `pdf-parse/lib/pdf-parse.js` directly. It also
+occasionally throws a transient "bad XRef entry" on the first try, so we retry the
+parse up to 3 times before giving up (see `failures-and-fixes.md`, Failure #4).
+
+**3. The OpenRouter key lives only on the backend; we use FREE models.**
+*Why:* The key must never reach the browser. We call OpenRouter from the server and
+use `:free` models so the app costs nothing to run.
+
+**4. A fallback LIST of free models, not one hard-coded model.**
+*Why:* The free tier is flaky - any one model can be momentarily rate-limited (429)
+or retired (404). So `OPENROUTER_MODEL` is a comma-separated list; we try each in
+turn and use the first that answers. This made scoring reliable in testing.
+
+**5. Strict-JSON prompt + defensive parsing.**
+*Why:* We ask the model for a JSON object (`score`, `missingSkills`, `summary`) and
+then pull the JSON out of the reply and clamp/validate every field, because models
+sometimes wrap JSON in prose. Bad/empty replies return a clean error.
+
+**6. Score is tied to a job and saved on it.**
+*Why:* Each job carries its own `jobDescription`; scoring saves `aiScore`,
+`missingSkills`, `aiSummary` on that job, so the card shows the badge and the result
+persists. The matcher modal re-opens with the last result.
+
+**7. Graceful guards.**
+*Why:* No resume -> "upload your resume first"; no/short description -> ask for one;
+rate-limited -> "the free tier is busy, try again"; timeout -> friendly message.
+
+### How it was verified (live, with screenshots)
+- Real OpenRouter call returned a sensible result: score **65**, missing skills
+  `[Docker, AWS, TypeScript, GraphQL, CI/CD pipelines]`, and an accurate summary.
+- Resume upload extracted text from a PDF and saved it; `/auth/me` then reported
+  `hasResume: true`.
+- Drove the real UI (puppeteer): the dashboard card shows the score badge, the AI
+  matcher modal shows the score ring + summary + skill chips, and the resume modal
+  shows "Resume on file" with a Replace button.
+- `npm run build` compiles cleanly (105 modules).
+
+### Done this phase
+- ✅ Resume upload/storage + reusable AI matcher with score, missing skills, summary.
+- Commit: `feat: add AI resume matcher with OpenRouter integration`.
+
+---
+
 <!-- Add the next phase/entry below this line using the same format. -->

@@ -4,7 +4,7 @@ import { STATUSES } from "../constants/jobStatus.js";
 // The board: one column per status, laid out horizontally. On smaller screens
 // it scrolls sideways. It is a "dumb" layout component - it just slices the jobs
 // by status and hands the actions down; all the data lives in the Dashboard.
-export default function KanbanBoard({ jobs, onEdit, onDelete, onMove, onAdd }) {
+export default function KanbanBoard({ jobs, onEdit, onDelete, onMove, onAdd, onScore }) {
   return (
     <div className="scroll-slim -mx-4 flex gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0">
       {STATUSES.map((status) => (
@@ -17,6 +17,7 @@ export default function KanbanBoard({ jobs, onEdit, onDelete, onMove, onAdd }) {
           onDelete={onDelete}
           onMove={onMove}
           onAdd={onAdd}
+          onScore={onScore}
         />
       ))}
     </div>

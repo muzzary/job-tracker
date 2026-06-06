@@ -76,7 +76,18 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  const value = { user, loading, register, login, logout };
+  // Merge a few fields into the current user (e.g. after uploading a resume) and
+  // keep localStorage in sync.
+  const updateUser = (patch) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...patch };
+      localStorage.setItem("user", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const value = { user, loading, register, login, logout, updateUser };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

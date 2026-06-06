@@ -6,6 +6,8 @@ import StatsBar from "../components/StatsBar.jsx";
 import KanbanBoard from "../components/KanbanBoard.jsx";
 import AddJobModal from "../components/AddJobModal.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import AIMatcherModal from "../components/AIMatcherModal.jsx";
+import ResumeModal from "../components/ResumeModal.jsx";
 import { PlusIcon, SearchIcon, BriefcaseIcon, AlertIcon } from "../components/icons.jsx";
 import { STATUSES } from "../constants/jobStatus.js";
 
@@ -26,6 +28,10 @@ export default function Dashboard() {
   const [addStatus, setAddStatus] = useState("Saved");
   const [pendingDelete, setPendingDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  // AI matcher + resume modals.
+  const [matcherJob, setMatcherJob] = useState(null);
+  const [resumeOpen, setResumeOpen] = useState(false);
 
   // A tiny transient message for background failures (e.g. a drag that didn't
   // save). Auto-clears after a few seconds.
@@ -109,6 +115,16 @@ export default function Dashboard() {
     }
   };
 
+  // Open the AI matcher for a job.
+  const openMatcher = (job) => setMatcherJob(job);
+
+  // When the AI returns a score, update that job in our state (so the card badge
+  // and stats reflect it) and keep the open matcher in sync.
+  const handleScored = (updatedJob) => {
+    setJobs((prev) => prev.map((j) => (j._id === updatedJob._id ? updatedJob : j)));
+    setMatcherJob(updatedJob);
+  };
+
   // Delete after confirmation.
   const confirmDelete = async () => {
     if (!pendingDelete) return;
@@ -131,7 +147,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-[100dvh]">
-      <Navbar />
+      <Navbar onOpenResume={() => setResumeOpen(true)} />
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         {/* Header row: greeting + search + add */}
@@ -189,6 +205,7 @@ export default function Dashboard() {
                   onDelete={setPendingDelete}
                   onMove={moveJob}
                   onAdd={openAdd}
+                  onScore={openMatcher}
                 />
               </div>
               {/* If a search hides everything, say so. */}
@@ -225,6 +242,18 @@ export default function Dashboard() {
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
       />
+
+      {/* AI resume matcher */}
+      <AIMatcherModal
+        open={Boolean(matcherJob)}
+        job={matcherJob}
+        onClose={() => setMatcherJob(null)}
+        onScored={handleScored}
+        onUploadResume={() => setResumeOpen(true)}
+      />
+
+      {/* Resume upload (also opened from the navbar) */}
+      <ResumeModal open={resumeOpen} onClose={() => setResumeOpen(false)} />
     </div>
   );
 }
