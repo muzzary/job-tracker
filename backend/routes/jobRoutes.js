@@ -28,6 +28,7 @@ const createJobValidation = [
     .withMessage("Invalid status value"),
   body("dateApplied").optional().isISO8601().withMessage("dateApplied must be a valid date"),
   body("notes").optional().trim(),
+  body("jobDescription").optional().trim(),
 ];
 
 // Validation rules for updating a job.
@@ -43,6 +44,7 @@ const updateJobValidation = [
     .withMessage("Invalid status value"),
   body("dateApplied").optional().isISO8601().withMessage("dateApplied must be a valid date"),
   body("notes").optional().trim(),
+  body("jobDescription").optional().trim(),
 ];
 
 // Routes are written relative to "/api/jobs" (set in server.js).

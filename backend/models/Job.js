@@ -50,6 +50,13 @@ const jobSchema = new mongoose.Schema({
     trim: true,
   },
 
+  // The full job description text (Phase 5). The AI matcher scores the user's
+  // saved resume against this to produce aiScore + missingSkills below.
+  jobDescription: {
+    type: String,
+    trim: true,
+  },
+
   // The AI match score (0-100) added in Phase 5. Optional for now.
   aiScore: {
     type: Number,
@@ -61,6 +68,17 @@ const jobSchema = new mongoose.Schema({
   missingSkills: {
     type: [String], // an array of skill names
     default: [],
+  },
+
+  // A short, human-readable summary of the AI match (Phase 5).
+  aiSummary: {
+    type: String,
+    default: "",
+  },
+
+  // When the AI score was last computed - lets the UI show "scored on ...".
+  aiScoredAt: {
+    type: Date,
   },
 
   // When this job record was created.

@@ -12,6 +12,7 @@ export default function KanbanColumn({
   onDelete,
   onMove,
   onAdd,
+  onScore,
 }) {
   // Tracks whether a card is currently hovering over this column, so we can
   // highlight it as a valid drop zone.
@@ -81,6 +82,7 @@ export default function KanbanColumn({
               onEdit={onEdit}
               onDelete={onDelete}
               onMove={onMove}
+              onScore={onScore}
             />
           ))
         )}

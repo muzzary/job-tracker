@@ -26,6 +26,7 @@ const EMPTY = {
   status: "Saved",
   dateApplied: "",
   notes: "",
+  jobDescription: "",
 };
 
 // A modal used for BOTH adding a new application and editing an existing one.
@@ -57,6 +58,7 @@ export default function AddJobModal({
         status: editingJob.status || "Saved",
         dateApplied: toDateInput(editingJob.dateApplied),
         notes: editingJob.notes || "",
+        jobDescription: editingJob.jobDescription || "",
       });
     } else {
       setForm({ ...EMPTY, status: initialStatus });
@@ -118,6 +120,7 @@ export default function AddJobModal({
     if (form.jobUrl.trim()) payload.jobUrl = form.jobUrl.trim();
     if (form.dateApplied) payload.dateApplied = form.dateApplied;
     if (form.notes.trim()) payload.notes = form.notes.trim();
+    if (form.jobDescription.trim()) payload.jobDescription = form.jobDescription.trim();
 
     try {
       await onSave(payload, editingJob?._id);
@@ -248,11 +251,26 @@ export default function AddJobModal({
             </label>
             <textarea
               id="notes"
-              rows={3}
+              rows={2}
               className="input resize-none"
               placeholder="Recruiter name, referral, salary range, next steps..."
               value={form.notes}
               onChange={update("notes")}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="jobDescription" className="label">
+              Job description{" "}
+              <span className="font-normal text-ink/40">(optional - used for AI scoring)</span>
+            </label>
+            <textarea
+              id="jobDescription"
+              rows={4}
+              className="input resize-none"
+              placeholder="Paste the job posting here. The AI matcher compares it against your resume to score the fit."
+              value={form.jobDescription}
+              onChange={update("jobDescription")}
             />
           </div>
 

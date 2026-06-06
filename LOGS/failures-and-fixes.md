@@ -109,4 +109,44 @@ Format for every entry:
 
 ---
 
+## Failure #4 - pdf-parse "bad XRef entry" (transient, nondeterministic)
+
+- **Phase:** 5 (resume upload)
+- **What happened:**
+  Uploading a resume PDF sometimes returned "Could not read that PDF" even though
+  the exact same file had parsed fine moments earlier.
+- **Why it happened:**
+  `pdf-parse` bundles a very old `pdf.js`. Parsing the same buffer was
+  nondeterministic - in a 3-run test, run 1 threw `bad XRef entry` while runs 2 and
+  3 succeeded. It's a quirk of that old library, not the PDF.
+- **How we fixed it:**
+  Wrapped the parse in a small retry (`extractPdfText`): try up to 3 times before
+  giving up. A genuinely unreadable PDF still fails all 3 and returns a clear error;
+  a transient failure rides through on the retry. (Also: import the inner
+  `pdf-parse/lib/pdf-parse.js`, since the package entry crashes under ES modules.)
+- **Lesson:**
+  Some libraries are flaky in ways that have nothing to do with your input. When a
+  parse is cheap and idempotent, a short retry is a pragmatic, honest fix.
+
+## Failure #5 - OpenRouter free models 404 / 429
+
+- **Phase:** 5 (AI matcher)
+- **What happened:**
+  The first AI match returned 429; a single hard-coded free model wasn't reliable.
+  Probing several models showed a mix of `404 No endpoints` (retired ids) and
+  `429 temporarily rate-limited upstream` (busy).
+- **Why it happened:**
+  OpenRouter's free models change over time and are rate-limited per provider. Any
+  single `:free` model can be unavailable at a given moment.
+- **How we fixed it:**
+  `OPENROUTER_MODEL` is now a comma-separated LIST; the backend tries each model in
+  order and uses the first that answers. We seeded it with models confirmed working
+  from the live catalog. If every model is busy, the user gets a friendly "free tier
+  is busy, try again" message.
+- **Lesson:**
+  Don't hard-code one external model; with a flaky free tier, a fallback list (and a
+  graceful "try again" path) is far more reliable.
+
+---
+
 <!-- Add the next failure below this line using the same format. -->

@@ -26,6 +26,19 @@ const userSchema = new mongoose.Schema({
     required: true,
   },
 
+  // The user's resume as plain text, extracted from an uploaded PDF (Phase 5).
+  // We store it once and reuse it for AI scoring so the user doesn't have to
+  // re-upload every time. They can re-upload to replace it with an updated CV.
+  resume: {
+    type: String,
+    default: "",
+  },
+
+  // When the resume was last uploaded/replaced - shown in the UI.
+  resumeUpdatedAt: {
+    type: Date,
+  },
+
   // When the account was created.
   createdAt: {
     type: Date,
