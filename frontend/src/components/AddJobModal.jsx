@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { STATUS_KEYS } from "../constants/jobStatus.js";
+import useBodyScrollLock from "../hooks/useBodyScrollLock.js";
 import { CloseIcon, AlertIcon } from "./icons.jsx";
 
 // Turn an ISO date string into the YYYY-MM-DD value an <input type="date">
@@ -67,16 +68,13 @@ export default function AddJobModal({
     setServerError("");
   }, [open, editingJob, initialStatus]);
 
-  // Close on Escape and lock background scroll while the modal is open.
+  useBodyScrollLock(open);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
   if (!open) return null;

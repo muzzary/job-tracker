@@ -93,7 +93,7 @@ export default function Navbar({ onOpenResume }) {
                 <button
                   type="button"
                   onClick={() => {
-                    onOpenResume();
+                    if (onOpenResume) onOpenResume();
                     setMenuOpen(false);
                   }}
                   className="btn-outline mt-2 w-full py-2 text-xs"
