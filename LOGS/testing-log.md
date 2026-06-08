@@ -104,9 +104,38 @@ browser (puppeteer) for screenshots.
 | 5.10 | UI: AI matcher modal | click a card's score | modal shows score ring + summary + skill chips | ✅ |
 | 5.11 | UI: resume modal | open from the profile dropdown | shows "Resume on file" + Replace button | ✅ |
 
-## Not yet covered (planned)
+## Phase 5.5 - Automated API tests (Jest + Supertest)
 
-- Automated tests with **Jest + Supertest** (Phase 5.5) - at least one success +
-  one failure case per route.
-- AI matcher endpoint tests once Phase 5 is built (`POST /api/ai/match`).
+Run with `npm test` from `backend/`. All 15 tests pass in ~20 s.
+Database: `job-tracker-test` on the same Atlas cluster (separate from real data).
+Node flag: `--experimental-vm-modules` required for ESM + Jest.
+
+**auth.test.js** — 8 tests
+
+| # | What we tested | How | Expected | Result |
+|---|---------------|-----|----------|--------|
+| 5.5.1 | Register — success | `POST /api/auth/register` with valid body | 201, token returned, no password in response | ✅ |
+| 5.5.2 | Register — duplicate email | Register same email twice | 400 "already registered" | ✅ |
+| 5.5.3 | Register — missing fields | No name or password | 400 validation error | ✅ |
+| 5.5.4 | Login — correct credentials | `POST /api/auth/login` | 200, token returned | ✅ |
+| 5.5.5 | Login — wrong password | Bad password | 401 "invalid email or password" | ✅ |
+| 5.5.6 | Get me — valid token | `GET /api/auth/me` with Bearer token | 200, user object | ✅ |
+| 5.5.7 | Get me — no token | No Authorization header | 401 | ✅ |
+
+**jobs.test.js** — 8 tests
+
+| # | What we tested | How | Expected | Result |
+|---|---------------|-----|----------|--------|
+| 5.5.8 | Create job — success | `POST /api/jobs` with valid body | 201, job returned with default status "Saved" | ✅ |
+| 5.5.9 | Create job — missing role | Send company only | 400 validation error | ✅ |
+| 5.5.10 | Create job — no token | No auth header | 401 | ✅ |
+| 5.5.11 | List jobs | Create one job, `GET /api/jobs` | 200, array length 1 | ✅ |
+| 5.5.12 | Get job by id — owner | `GET /api/jobs/:id` as owner | 200, correct job returned | ✅ |
+| 5.5.13 | Get job by id — other user | Fetch another user's job id | 404 (ownership enforced) | ✅ |
+| 5.5.14 | Update job | `PUT /api/jobs/:id` with `{status: "Applied"}` | 200, updated status | ✅ |
+| 5.5.15 | Delete job | `DELETE /api/jobs/:id`, then GET | 200 on delete; 404 on re-fetch | ✅ |
+
+## Not yet covered
+
+- AI matcher endpoint (`POST /api/ai/match`) — skipped: would consume real OpenRouter credits on every `npm test` run.
 - Frontend interaction tests (optional, later).
