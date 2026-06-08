@@ -34,10 +34,14 @@ const loginValidation = [
   body("password").notEmpty().withMessage("Password is required"),
 ];
 
+// Skip rate limiting in the test environment so tests can hit auth routes freely
+// without triggering the 10-request cap. In production it always runs.
+const withRateLimit = process.env.NODE_ENV === "test" ? [] : [authLimiter];
+
 // Routes are relative to "/api/auth" (set in server.js).
 // The rate limiter runs first, then validation, then the controller.
-router.post("/register", authLimiter, registerValidation, register);
-router.post("/login", authLimiter, loginValidation, login);
+router.post("/register", ...withRateLimit, registerValidation, register);
+router.post("/login", ...withRateLimit, loginValidation, login);
 
 // GET /me is protected (needs a valid token) and is NOT rate-limited, because
 // the frontend calls it on every page load to validate the saved session.
