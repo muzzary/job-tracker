@@ -11,6 +11,9 @@ import Job from "../models/Job.js";
 // away.
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const MAX_TEXT_LENGTH = 6000;
+const AI_TIMEOUT_MS = 45000;
+const MIN_DESCRIPTION_LENGTH = 30;
 // Free models to try, in order. OpenRouter's free tier is flaky - any single
 // model can be momentarily rate-limited ("429 ... temporarily rate-limited
 // upstream") or retired - so we try several and use the first that answers.
@@ -59,8 +62,8 @@ const buildMessages = (resume, jobDescription) => [
       '- "missingSkills": array of up to 8 short strings (important requirements in the ' +
       "job description that are NOT clearly shown in the resume)\n" +
       '- "summary": one or two sentences of specific, honest feedback\n\n' +
-      `RESUME:\n"""\n${cap(resume, 6000)}\n"""\n\n` +
-      `JOB DESCRIPTION:\n"""\n${cap(jobDescription, 6000)}\n"""\n\n` +
+      `RESUME:\n"""\n${cap(resume, MAX_TEXT_LENGTH)}\n"""\n\n` +
+      `JOB DESCRIPTION:\n"""\n${cap(jobDescription, MAX_TEXT_LENGTH)}\n"""\n\n` +
       "Respond with ONLY the JSON object.",
   },
 ];
@@ -69,7 +72,7 @@ const buildMessages = (resume, jobDescription) => [
 const askModel = async (model, messages) => {
   // Abort the request if the model takes too long, so we don't hang forever.
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 45000);
+  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
 
   let response;
   try {
@@ -162,7 +165,7 @@ export const matchResume = async (req, res) => {
 
     // 3) Use the description sent now (and save it) or the one already on the job.
     const description = (jobDescription || job.jobDescription || "").trim();
-    if (description.length < 30) {
+    if (description.length < MIN_DESCRIPTION_LENGTH) {
       return res.status(400).json({
         message: "Please add a job description (at least a few lines) to score against.",
       });

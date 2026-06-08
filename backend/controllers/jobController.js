@@ -27,7 +27,7 @@ export const createJob = async (req, res) => {
   // tell the client what was wrong instead of saving bad data.
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ message: "Validation failed", errors: errors.array() });
   }
 
   try {
@@ -79,7 +79,7 @@ export const updateJob = async (req, res) => {
   // Check the validation results first, same as createJob.
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ message: "Validation failed", errors: errors.array() });
   }
 
   try {

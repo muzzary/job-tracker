@@ -1,5 +1,5 @@
 import express from "express";
-import { body } from "express-validator";
+import { body, param } from "express-validator";
 import {
   getAllJobs,
   createJob,
@@ -47,11 +47,12 @@ const updateJobValidation = [
   body("jobDescription").optional().trim(),
 ];
 
-// Routes are written relative to "/api/jobs" (set in server.js).
-router.get("/", getAllJobs); // list all jobs
-router.post("/", createJobValidation, createJob); // create a job
-router.get("/:id", getJobById); // get one job
-router.put("/:id", updateJobValidation, updateJob); // update a job
-router.delete("/:id", deleteJob); // delete a job
+const validateId = param("id").isMongoId().withMessage("Invalid job ID");
+
+router.get("/", getAllJobs);
+router.post("/", createJobValidation, createJob);
+router.get("/:id", validateId, getJobById);
+router.put("/:id", validateId, updateJobValidation, updateJob);
+router.delete("/:id", validateId, deleteJob);
 
 export default router;

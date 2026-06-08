@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../api/axios.js";
+import useBodyScrollLock from "../hooks/useBodyScrollLock.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { CloseIcon, AlertIcon, UploadIcon, FileTextIcon, CheckIcon } from "./icons.jsx";
 
@@ -23,7 +24,8 @@ export default function ResumeModal({ open, onClose }) {
   const [success, setSuccess] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  // Reset transient state each time the modal opens, and lock background scroll.
+  useBodyScrollLock(open);
+
   useEffect(() => {
     if (!open) return;
     setFile(null);
@@ -31,11 +33,7 @@ export default function ResumeModal({ open, onClose }) {
     setSuccess("");
     const onKey = (e) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
   if (!open) return null;

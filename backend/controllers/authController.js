@@ -7,12 +7,11 @@ import User from "../models/User.js";
 // Passwords are hashed with bcrypt (never stored as plain text) and a JWT is
 // returned so the client can prove who it is on future requests.
 
-// Small helper: build a signed JWT that contains the user's id.
-// The token is signed with JWT_SECRET so nobody can forge one, and it expires
-// after 7 days so a stolen token does not work forever.
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
-};
+const BCRYPT_ROUNDS = 10;
+const JWT_EXPIRY = "7d";
+
+const generateToken = (userId) =>
+  jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: JWT_EXPIRY });
 
 // Shape the safe, public view of a user for API responses. We never send the
 // password hash, and we send the resume as a simple "do they have one + when"
@@ -31,7 +30,7 @@ export const register = async (req, res) => {
   // Stop early if express-validator found bad input.
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ message: "Validation failed", errors: errors.array() });
   }
 
   try {
@@ -45,7 +44,7 @@ export const register = async (req, res) => {
 
     // Hash the password before saving. The "10" is the salt strength -
     // higher is slower but harder to crack. 10 is a sensible default.
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Save the user with the hashed password (never the plain one).
@@ -67,13 +66,15 @@ export const register = async (req, res) => {
 // frontend calls this on startup to check a saved session is still valid (e.g.
 // it rejects a token whose account was deleted).
 export const getMe = async (req, res) => {
-  // The middleware verified the token; re-read the user so we include the latest
-  // resume status (which can change after the token was issued).
-  const user = await User.findById(req.user.id);
-  if (!user) {
-    return res.status(401).json({ message: "Not authorized, user no longer exists" });
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(401).json({ message: "Not authorized, user no longer exists" });
+    }
+    res.json({ user: toPublicUser(user) });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch user", error: error.message });
   }
-  res.json({ user: toPublicUser(user) });
 };
 
 // POST /api/auth/login
@@ -82,7 +83,7 @@ export const login = async (req, res) => {
   // Stop early if express-validator found bad input.
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ message: "Validation failed", errors: errors.array() });
   }
 
   try {

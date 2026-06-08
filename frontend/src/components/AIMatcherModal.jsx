@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios.js";
+import useBodyScrollLock from "../hooks/useBodyScrollLock.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { CloseIcon, AlertIcon, SparkleIcon, UploadIcon } from "./icons.jsx";
 
@@ -74,12 +75,10 @@ export default function AIMatcherModal({ open, job, onClose, onScored, onUploadR
     );
     const onKey = (e) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [open, job, onClose]);
+
+  useBodyScrollLock(open && !!job);
 
   if (!open || !job) return null;
 
