@@ -9,7 +9,7 @@ A full-stack MERN web app that helps job seekers track applications on a Kanban 
 ![Tests](https://img.shields.io/badge/Tests-15%20passing-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
-> **Live demo:** https://project-pgt9k.vercel.app
+> **Live demo:** https://job-tracker-muzzary.vercel.app
 > **API base:** https://job-tracker-production-3477.up.railway.app/api
 
 ---
