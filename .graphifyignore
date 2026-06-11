@@ -1,0 +1,10 @@
+# Exclude reference/asset files from the knowledge graph.
+# These aren't project code — they're design skill docs and binary assets
+# that clutter the God Nodes list with unrelated content.
+Skills/
+Design/
+prep/
+node_modules/
+*/node_modules/
+dist/
+graphify-out/
