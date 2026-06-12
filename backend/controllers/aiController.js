@@ -119,7 +119,7 @@ const askModel = async (model, messages) => {
 // Call OpenRouter, trying each free model in turn until one answers. If every
 // model fails, throw the last error so the route maps it to the right status
 // (e.g. a 429 becomes a friendly "free tier is busy" message).
-const callOpenRouter = async (messages) => {
+export const callOpenRouter = async (messages) => {
   let lastError;
   for (const model of MODELS) {
     try {
