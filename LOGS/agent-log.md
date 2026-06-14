@@ -355,6 +355,19 @@ preserved.
 
 ---
 
-## Steps remaining
+## Step 8 (partial) — Docs + cleanup (2026-06-14)
 
-- [ ] Step 8 — Deploy (Railway + Vercel) + final docs/README + demo
+- [x] **README brought current** (commit `4491b92`) — documents the assistant honestly:
+  it is NOT a live tool-calling agent. The three tools run in parallel and each judges
+  its own relevance via the `NOT_NEEDED` escape hatch. The README's "Design note"
+  records why the original `tool_choice: "auto"` planner was dropped (free-tier latency
+  and unreliability).
+- [x] **Audit removed the dead agent artifacts** (commit `3d0d738`): `agent/toolSchemas.js`,
+  `spike.js`, `spike-fallback.js`, `test-agent.js`, `test-tools.js`, and the fake `steps`
+  array in `agentRunner.js` — all unused after the move to parallel execution. See
+  build-log "Phase 8 (cont.) — Code audit & cleanup" for the full sweep.
+- [ ] Deploy (Railway + Vercel) + demo
+
+> Reality check for interviews: this is an AI-assisted **tool pipeline**, not a true
+> agent. The orchestration (which tools run) is fixed in code; only the per-tool
+> relevance decision lives in the model. This was a deliberate reliability trade-off.

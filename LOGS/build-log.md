@@ -479,4 +479,101 @@ each result can be downloaded as a `.txt` for pasting into application portals.
 ### Done
 - ✅ Frontend agent modal, result caching, NOT_NEEDED reasons, holistic matcher,
   rigorous interview prep, and the match-score → agent connection.
-- Remaining: Step 8 — deploy (Railway + Vercel), final README, demo.
+- Remaining: Step 8 — deploy (Railway + Vercel), demo.
+
+---
+
+## Phase 8 — Dashboard redesign + resume filename
+
+**Goal:** Make the dashboard (the app's home) more attractive and lively, and remove a
+small but real confusion: the UI said "Resume on file" without ever showing *which*
+file the user uploaded.
+
+### What was built
+
+| File | What it does |
+|------|--------------|
+| `frontend/src/pages/Dashboard.jsx` | Animated ambient backdrop + time-aware hero greeting (gradient name, live date pill); refreshed empty/error states |
+| `frontend/src/components/StatsBar.jsx` | Rebuilt as four KPI tiles (Total, In progress, Offers, Response rate) with count-up numbers and hover glow |
+| `frontend/src/hooks/useCountUp.js` | rAF count-up hook that tweens old→new value (respects reduced-motion) |
+| `frontend/src/components/KanbanColumn.jsx` | Frosted-glass columns; livelier drag-over |
+| `frontend/tailwind.config.js`, `src/index.css` | New keyframes + `.aurora`/`.glass-card`/`.text-gradient`/`.shine-streak` utilities |
+| `frontend/src/components/icons.jsx` | `TrendingUp`, `Trophy`, `Target` icons |
+| `backend/models/User.js` | `resumeFileName` field |
+| `backend/controllers/userController.js`, `authController.js` | Store the uploaded PDF's name; return it from upload, getResume, and the public user |
+| `frontend/src/components/Navbar.jsx`, `ResumeModal.jsx` | Show the actual filename instead of "Resume on file" |
+
+### How & why — decision by decision
+
+**1. Lively, hand-built visuals — no animation library.**
+*Why:* Rule 5 forbids animation libraries, so the ambient "aurora" backdrop, count-up
+numbers, and sheen are pure CSS + a small rAF hook. All of it disables itself under
+`prefers-reduced-motion`. The look is richer without adding a dependency.
+
+**2. KPI tiles instead of a raw funnel.**
+*Why:* The first funnel attempt read as rough/cluttered, so it was removed. Four
+headline tiles (Total, In progress, Offers, Response rate) give an at-a-glance summary;
+per-stage counts still live on each Kanban column header, so no information is lost.
+
+**3. Store the resume's original filename.**
+*Why:* "Resume on file" never told the user *which* CV was saved — confusing if they
+have several. We now persist `User.resumeFileName` and surface it in the navbar and the
+resume modal, falling back to "Resume on file" for resumes uploaded before this change.
+
+### How it was verified
+- `npm run build` (frontend) compiles cleanly. ✅
+- `npm test` (backend) → 20/20 passing (no backend regressions from the resume field). ✅
+
+### Done
+- ✅ Redesigned dashboard + resume-by-filename. Commits `1f7f270`.
+
+---
+
+## Phase 8 (cont.) — Code audit & cleanup (Elite-engineer pass)
+
+**Goal:** A safety-first audit and overhaul for cleanliness — delete dead code, remove
+duplication, and harden error handling — without breaking anything.
+
+### Phase 1 — Audit (read-only)
+Two subagents scanned the backend and frontend and cross-verified every "dead code"
+claim by grepping for references before flagging it safe to remove. Top findings: dead
+Phase-7 agent artifacts, duplicate/dead Tailwind keyframes, triplicated helpers, and a
+few error-handling gaps.
+
+### Phase 2 — Clean & delete (verified safe)
+
+| Removed | Why it was dead |
+|---------|-----------------|
+| `agent/toolSchemas.js` | The agent no longer does LLM tool-calling, so the schemas were unused |
+| `test-agent.js`, `test-tools.js`, `spike.js`, `spike-fallback.js` | Leftover dev/spike scripts; nothing imported them (`spike.js` even hardcoded a model name — rule 7) |
+| `steps` array in `agentRunner.js` | Built and returned but never stored, returned, or read — and the values were fake |
+| `shimmer`/`float`/`aurora`/`shine`/`pop-in` keyframes in `tailwind.config.js` | No `animate-*` utility referenced them, so Tailwind never emitted them; the live versions are raw CSS in `index.css` |
+
+The CSS bundle stayed byte-identical (33.85 kB) after removing the keyframes — proof
+they were truly dead.
+
+### Phase 3 — Refactor & document
+
+**1. One source of truth for shared helpers (DRY).**
+- `parseToolResponse` → `backend/tools/parseToolResponse.js` (was identical in all 3 tools)
+- `readError` → `frontend/src/utils/readError.js` (was in 4 files; gained a `fallback` param)
+- `formatDate`/`toDateInput` → `frontend/src/utils/date.js` (was in 3 files)
+- Escape-key wiring → `frontend/src/hooks/useEscapeKey.js`, now used by all 5 modals
+
+**2. Hardened error handling.**
+- `agentController.js` — all DB calls moved inside `try/catch`; added the missing
+  `if (!user)` null guard (clean 401 instead of a 500) and a file-header doc.
+- `AgentResultsModal.jsx` — `clipboard.writeText` wrapped in try/catch with a visible
+  "Failed" state instead of a silent unhandled rejection.
+
+> Note on "strict type safety": this is plain JS, so we hardened with defensive guards
+> rather than introducing TypeScript (a large breaking change, against the safety goal).
+
+### How it was verified
+- `npm test` → 20/20 passing after every step. ✅
+- `npm run build` (frontend) clean; JS bundle shrank 268.1 → 267.2 kB from the dedup. ✅
+- Grep confirmed each shared helper now has exactly one definition.
+
+### Done
+- ✅ Dead code removed, duplication consolidated, error handling hardened, tests green.
+  Commit `3d0d738`. README brought current in commit `4491b92`.

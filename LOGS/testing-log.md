@@ -208,3 +208,36 @@ Tests:       20 passed, 20 total
 
 ### Build verification
 `npm run build` (frontend) — 107 modules transformed, compiles cleanly. ✅
+
+---
+
+## Phase 8 — Dashboard redesign + resume filename (2026-06-14)
+
+| # | What we tested | How | Expected | Result |
+|---|----------------|-----|----------|--------|
+| 8.1 | Dashboard redesign renders | `npm run build` + loaded the board | Aurora backdrop, hero greeting, KPI tiles, frosted columns all render | ✅ |
+| 8.2 | KPI count-up | Opened dashboard with jobs | Numbers tween up on load; tween old→new (not from 0) when a card moves | ✅ |
+| 8.3 | Reduced-motion respected | Checked `useCountUp` / CSS guards | Animations skip / numbers snap when `prefers-reduced-motion` is set | ✅ |
+| 8.4 | Resume filename shown | Uploaded a PDF, opened navbar + resume modal | Actual filename (e.g. `Muzzary_CV.pdf`) shown, not "Resume on file" | ✅ |
+| 8.5 | Legacy resume fallback | User with a resume but no stored filename | Gracefully falls back to "Resume on file" | ✅ |
+| 8.6 | Backend regression | `npm test` after adding `resumeFileName` | All routes still green | ✅ (20/20) |
+
+---
+
+## Phase 8 (cont.) — Code audit & cleanup (2026-06-14)
+
+| # | What we tested | How | Expected | Result |
+|---|----------------|-----|----------|--------|
+| 8.7 | Dead-file deletion safe | Grepped for references, then deleted 5 files | No live code imports them; app still builds/tests | ✅ |
+| 8.8 | Dead Tailwind keyframes | Removed from config, rebuilt | CSS bundle byte-identical (33.85 kB) → confirmed never emitted | ✅ |
+| 8.9 | Shared `parseToolResponse` | Backend suite after consolidation | Tool behaviour unchanged | ✅ (20/20) |
+| 8.10 | Shared `readError` / date utils | Frontend build after consolidation | Compiles; one definition each (grep-verified) | ✅ |
+| 8.11 | `useEscapeKey` across 5 modals | Build after refactor | All modals still close on Escape; build clean | ✅ |
+| 8.12 | Hardened error handling | Reviewed `agentController` + clipboard | DB calls inside try/catch; `if (!user)` guard; copy shows "Failed" | ✅ |
+
+### Full suite after the cleanup
+```
+Test Suites: 3 passed, 3 total
+Tests:       20 passed, 20 total
+```
+Frontend JS bundle shrank 268.1 → 267.2 kB from the dedup. ✅
