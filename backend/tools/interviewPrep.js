@@ -1,4 +1,5 @@
 import { callOpenRouter } from "../controllers/aiController.js";
+import { parseToolResponse } from "./parseToolResponse.js";
 
 export async function generateInterviewPrep({ jobDescription, resumeText }) {
   const messages = [
@@ -29,12 +30,4 @@ export async function generateInterviewPrep({ jobDescription, resumeText }) {
   ];
   const raw = await callOpenRouter(messages, 2500);
   return parseToolResponse(raw);
-}
-
-function parseToolResponse(raw) {
-  const trimmed = (raw ?? "").trim();
-  if (trimmed.startsWith("NOT_NEEDED:")) {
-    return { content: null, reason: trimmed.slice("NOT_NEEDED:".length).trim() };
-  }
-  return { content: trimmed, reason: null };
 }

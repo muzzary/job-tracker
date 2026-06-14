@@ -1,16 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../api/axios.js";
 import useBodyScrollLock from "../hooks/useBodyScrollLock.js";
+import useEscapeKey from "../hooks/useEscapeKey.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { CloseIcon, AlertIcon, UploadIcon, FileTextIcon, CheckIcon } from "./icons.jsx";
-
-// Format an ISO date for the "uploaded on ..." line.
-function formatDate(value) {
-  if (!value) return "";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-}
+import { formatDate } from "../utils/date.js";
 
 // Modal for uploading / replacing the saved resume. The resume is sent as a PDF;
 // the backend extracts the text and stores it on the user so the AI matcher can
@@ -26,15 +20,14 @@ export default function ResumeModal({ open, onClose }) {
 
   useBodyScrollLock(open);
 
+  useEscapeKey(onClose, open);
+
   useEffect(() => {
     if (!open) return;
     setFile(null);
     setError("");
     setSuccess("");
-    const onKey = (e) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 

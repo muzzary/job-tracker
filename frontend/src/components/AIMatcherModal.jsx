@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios.js";
 import useBodyScrollLock from "../hooks/useBodyScrollLock.js";
+import useEscapeKey from "../hooks/useEscapeKey.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { CloseIcon, AlertIcon, SparkleIcon, UploadIcon } from "./icons.jsx";
-
-function readError(err) {
-  return err?.response?.data?.message || "Scoring failed. Please try again.";
-}
+import { readError } from "../utils/readError.js";
 
 // A circular gauge for the 0-100 match score. Colour shifts from coral (poor)
 // through amber to teal (strong) so the result reads at a glance.
@@ -73,12 +71,10 @@ export default function AIMatcherModal({ open, job, onClose, onScored, onUploadR
           }
         : null
     );
-    const onKey = (e) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, job, onClose]);
+  }, [open, job]);
 
   useBodyScrollLock(open && !!job);
+  useEscapeKey(onClose, open && !!job);
 
   if (!open || !job) return null;
 
@@ -101,7 +97,7 @@ export default function AIMatcherModal({ open, job, onClose, onScored, onUploadR
       });
       onScored(data); // let the dashboard update the card/board
     } catch (err) {
-      setError(readError(err));
+      setError(readError(err, "Scoring failed. Please try again."));
     } finally {
       setScoring(false);
     }

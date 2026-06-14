@@ -1,24 +1,10 @@
 import { useEffect, useState } from "react";
 import { STATUS_KEYS } from "../constants/jobStatus.js";
 import useBodyScrollLock from "../hooks/useBodyScrollLock.js";
+import useEscapeKey from "../hooks/useEscapeKey.js";
 import { CloseIcon, AlertIcon } from "./icons.jsx";
-
-// Turn an ISO date string into the YYYY-MM-DD value an <input type="date">
-// expects. Returns "" when there's no date.
-function toDateInput(value) {
-  if (!value) return "";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toISOString().slice(0, 10);
-}
-
-// Pull a readable message out of an API error (same shape as the auth pages).
-function readError(err) {
-  const data = err?.response?.data;
-  if (data?.errors?.length) return data.errors[0].msg;
-  if (data?.message) return data.message;
-  return "Could not save. Please try again.";
-}
+import { readError } from "../utils/readError.js";
+import { toDateInput } from "../utils/date.js";
 
 const EMPTY = {
   company: "",
@@ -69,13 +55,7 @@ export default function AddJobModal({
   }, [open, editingJob, initialStatus]);
 
   useBodyScrollLock(open);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  useEscapeKey(onClose, open);
 
   if (!open) return null;
 
@@ -124,7 +104,7 @@ export default function AddJobModal({
       await onSave(payload, editingJob?._id);
       onClose();
     } catch (err) {
-      setServerError(readError(err));
+      setServerError(readError(err, "Could not save. Please try again."));
     } finally {
       setSubmitting(false);
     }
