@@ -6,7 +6,9 @@ export async function tailorResume({ jobDescription, resumeText }) {
       role: "system",
       content:
         "You are a resume editor. You only suggest edits to real content — never invent " +
-        "experience, employers, or skills the candidate does not already have.",
+        "experience, employers, or skills the candidate does not already have. " +
+        "If the resume already matches the role well and no meaningful edits are warranted, " +
+        "respond with exactly: NOT_NEEDED: <one-sentence reason>. Otherwise suggest the edits.",
     },
     {
       role: "user",
@@ -17,5 +19,14 @@ export async function tailorResume({ jobDescription, resumeText }) {
         `Return as a numbered list.`,
     },
   ];
-  return callOpenRouter(messages);
+  const raw = await callOpenRouter(messages, 1500);
+  return parseToolResponse(raw);
+}
+
+function parseToolResponse(raw) {
+  const trimmed = (raw ?? "").trim();
+  if (trimmed.startsWith("NOT_NEEDED:")) {
+    return { content: null, reason: trimmed.slice("NOT_NEEDED:".length).trim() };
+  }
+  return { content: trimmed, reason: null };
 }

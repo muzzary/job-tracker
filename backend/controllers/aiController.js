@@ -20,7 +20,16 @@ const MIN_DESCRIPTION_LENGTH = 30;
 // Override/extend with a comma-separated OPENROUTER_MODEL list in .env.
 const MODELS = (
   process.env.OPENROUTER_MODEL ||
-  "google/gemma-4-31b-it:free,meta-llama/llama-3.3-70b-instruct:free,qwen/qwen3-coder:free,liquid/lfm-2.5-1.2b-instruct:free"
+  [
+    "google/gemma-4-31b-it:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "deepseek/deepseek-chat-v3-0324:free",
+    "mistralai/devstral-small:free",
+    "microsoft/phi-4-reasoning-plus:free",
+    "qwen/qwen3-coder:free",
+    "tngtech/deepseek-r1t-chimera:free",
+    "liquid/lfm-2.5-1.2b-instruct:free",
+  ].join(",")
 )
   .split(",")
   .map((m) => m.trim())
@@ -45,23 +54,34 @@ const extractJson = (text) => {
 };
 
 // Build the prompt that asks the model for a strict JSON verdict.
+// The score must reflect EVERY requirement in the posting — not only skills.
 const buildMessages = (resume, jobDescription) => [
   {
     role: "system",
     content:
       "You are an expert technical recruiter. You compare a candidate's resume to a " +
-      "job description and judge the match honestly. Respond with ONLY a single valid " +
-      "JSON object and no other text.",
+      "job description and judge the overall fit honestly and strictly. Respond with " +
+      "ONLY a single valid JSON object and no other text.",
   },
   {
     role: "user",
     content:
-      "Compare the RESUME to the JOB DESCRIPTION and return a JSON object with exactly " +
-      "these keys:\n" +
-      '- "score": integer 0-100 (how well the resume matches; higher = better fit)\n' +
-      '- "missingSkills": array of up to 8 short strings (important requirements in the ' +
-      "job description that are NOT clearly shown in the resume)\n" +
-      '- "summary": one or two sentences of specific, honest feedback\n\n' +
+      "Compare the RESUME to the JOB DESCRIPTION and score the candidate's OVERALL fit.\n\n" +
+      "Weigh ALL of these requirements, not just skills:\n" +
+      "1. Hard skills and tools (and closely related/transferable ones).\n" +
+      "2. Years and level of experience required (e.g. '3+ years', 'senior'). If the " +
+      "resume falls short of the required experience, that must lower the score even when " +
+      "the skills match.\n" +
+      "3. Education, certifications, or degree requirements.\n" +
+      "4. Domain / industry keywords and responsibilities described in the posting.\n" +
+      "5. Soft requirements explicitly called out (e.g. leadership, on-call, languages).\n\n" +
+      "Return a JSON object with exactly these keys:\n" +
+      '- "score": integer 0-100 — the OVERALL fit across every requirement above, not a ' +
+      "skills-only score. A strong skills match with too little experience should NOT score high.\n" +
+      '- "missingSkills": array of up to 8 short strings — the most important UNMET requirements ' +
+      "(may include experience gaps, missing degrees, or keywords, not only skills).\n" +
+      '- "summary": one or two sentences of specific, honest feedback that names the biggest ' +
+      "strengths and the biggest gaps.\n\n" +
       `RESUME:\n"""\n${cap(resume, MAX_TEXT_LENGTH)}\n"""\n\n` +
       `JOB DESCRIPTION:\n"""\n${cap(jobDescription, MAX_TEXT_LENGTH)}\n"""\n\n` +
       "Respond with ONLY the JSON object.",
@@ -69,7 +89,7 @@ const buildMessages = (resume, jobDescription) => [
 ];
 
 // Try one model. Returns the assistant text on success, or throws a tagged error.
-const askModel = async (model, messages) => {
+const askModel = async (model, messages, maxTokens = 700) => {
   // Abort the request if the model takes too long, so we don't hang forever.
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
@@ -85,7 +105,7 @@ const askModel = async (model, messages) => {
         "HTTP-Referer": process.env.CLIENT_URL || "http://localhost:5173",
         "X-Title": "Job Tracker",
       },
-      body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: 700 }),
+      body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: maxTokens }),
       signal: controller.signal,
     });
   } catch (err) {
@@ -119,11 +139,11 @@ const askModel = async (model, messages) => {
 // Call OpenRouter, trying each free model in turn until one answers. If every
 // model fails, throw the last error so the route maps it to the right status
 // (e.g. a 429 becomes a friendly "free tier is busy" message).
-export const callOpenRouter = async (messages) => {
+export const callOpenRouter = async (messages, maxTokens = 700) => {
   let lastError;
   for (const model of MODELS) {
     try {
-      return await askModel(model, messages);
+      return await askModel(model, messages, maxTokens);
     } catch (err) {
       lastError = err;
       // Try the next model on rate-limit / not-found / server errors.

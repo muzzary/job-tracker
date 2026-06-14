@@ -139,3 +139,72 @@ Node flag: `--experimental-vm-modules` required for ESM + Jest.
 
 - AI matcher endpoint (`POST /api/ai/match`) — skipped: would consume real OpenRouter credits on every `npm test` run.
 - Frontend interaction tests (optional, later).
+
+---
+
+## Phase 7 — AI Agent (Steps 1–6) (2026-06-12)
+
+### Manual tests
+
+| # | What we tested | How | Expected | Result |
+|---|----------------|-----|----------|--------|
+| 7.1 | `draftCoverLetter` tool in isolation | `node test-tools.js` with React dev JD + sample resume | Well-structured cover letter grounded in resume | ✅ |
+| 7.2 | `dotenv` not loaded in standalone script | Ran without `dotenv.config()` | 503 — API key undefined | ✅ (expected fail, fixed) |
+| 7.3 | Agent loop — matching JD | `node test-agent.js` React dev JD | All 3 tools called, steps logged, all outputs returned | ✅ |
+| 7.4 | Agent loop — mismatched JD | `node test-agent.js` Senior ML Engineer JD | Agent warned about gap, skipped all tools | ✅ |
+| 7.5 | Honesty check — resume tailor output | Reviewed tailor suggestion for "REST APIs" keyword | Correctly surfaced skill implied by Express (not fabricated) | ✅ |
+| 7.6 | `POST /api/agent/run` live endpoint | curl with real JWT + jobId | 200 with coverLetter, interviewPrep, steps; resumeTailor null (agent skipped it) | ✅ |
+| 7.7 | Guard: no jobId | curl with empty body | 400 "jobId is required" | ✅ |
+| 7.8 | Guard: no job description | curl with job that has no description | 400 "no description, add one first" | ✅ |
+| 7.9 | Guard: no resume | curl with user that has no resume | 400 "no resume, upload first" | ✅ |
+
+### Automated tests — `agent.test.js` (5 tests)
+
+| # | Test | Expected | Result |
+|---|------|----------|--------|
+| 7.10 | Valid request — mocked LLM calls all 3 tools | 200, body has coverLetter, interviewPrep, resumeTailor, steps | ✅ |
+| 7.11 | No auth token | 401 | ✅ |
+| 7.12 | Missing jobId | 400, message matches /jobId/i | ✅ |
+| 7.13 | Job with no description | 400, message matches /description/i | ✅ |
+| 7.14 | User with no resume | 400, message matches /resume/i | ✅ |
+
+### Issue hit during Step 6
+`ReferenceError: jest is not defined` — ESM mode does not inject `jest` as a global.
+Fixed by adding `import { jest } from "@jest/globals"` to the test file.
+
+### Full suite after Phase 7 Steps 1–6
+```
+Test Suites: 3 passed, 3 total
+Tests:       20 passed, 20 total
+Time:        ~33s
+```
+All 15 prior tests stayed green. ✅
+
+---
+
+## Phase 7 — Frontend & Refinements (Steps 7–7.5) (2026-06-14)
+
+### Manual / live tests
+
+| # | What we tested | How | Expected | Result |
+|---|----------------|-----|----------|--------|
+| 7.15 | Agent modal end-to-end | Clicked "Run AI assistant" on a real job | Modal runs agent, shows tabs with content | ✅ |
+| 7.16 | Honest skip behaviour | Ran agent on a "3 years required" role as a fresh grad | Cover letter + interview prep made; resume tailor **declined** as not a fit | ✅ |
+| 7.17 | NOT_NEEDED reason shown | Inspected the skipped tab | Reassuring "you're already covered" state with the agent's reason | ✅ |
+| 7.18 | Result caching | Re-opened the same job's assistant | Returned instantly from cache; "Generated …" timestamp shown | ✅ |
+| 7.19 | Re-run bypasses cache | Clicked Re-run | Fresh agent run (`force: true`), new results saved | ✅ |
+| 7.20 | Low-match nudge | Viewed a card scored < 60 | "Low match — get help applying →" button opens the agent | ✅ |
+| 7.21 | Download as .txt | Clicked Download on a result tab | File saved as `cover-letter-<company>.txt` | ✅ |
+
+### Regression — automated suite after refinements
+The caching change meant the agent response now comes from the persisted
+`job.agentResults` (no `steps` field), so test 7.10's assertion changed from
+`steps` to `generatedAt`.
+```
+Test Suites: 3 passed, 3 total
+Tests:       20 passed, 20 total
+```
+✅
+
+### Build verification
+`npm run build` (frontend) — 107 modules transformed, compiles cleanly. ✅
