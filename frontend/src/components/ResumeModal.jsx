@@ -71,7 +71,11 @@ export default function ResumeModal({ open, onClose }) {
       const { data } = await api.post("/users/resume", form);
 
       // Update the global user so the navbar/matcher know a resume now exists.
-      updateUser({ hasResume: true, resumeUpdatedAt: data.resumeUpdatedAt });
+      updateUser({
+        hasResume: true,
+        resumeFileName: data.fileName,
+        resumeUpdatedAt: data.resumeUpdatedAt,
+      });
       setSuccess(
         `Saved "${data.fileName}" - ${data.characters.toLocaleString()} characters of text extracted.`
       );
@@ -118,7 +122,9 @@ export default function ResumeModal({ open, onClose }) {
           <div className="text-sm">
             {user?.hasResume ? (
               <>
-                <p className="font-medium text-ink">Resume on file</p>
+                <p className="truncate font-medium text-ink" title={user.resumeFileName || undefined}>
+                  {user.resumeFileName || "Resume on file"}
+                </p>
                 <p className="text-ink/55">
                   Last updated {formatDate(user.resumeUpdatedAt) || "recently"}
                 </p>

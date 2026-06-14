@@ -34,6 +34,13 @@ const userSchema = new mongoose.Schema({
     default: "",
   },
 
+  // The original file name of the uploaded resume PDF (e.g. "Muzzary_CV.pdf").
+  // Shown in the UI so the user can tell which file is currently on file.
+  resumeFileName: {
+    type: String,
+    default: "",
+  },
+
   // When the resume was last uploaded/replaced - shown in the UI.
   resumeUpdatedAt: {
     type: Date,

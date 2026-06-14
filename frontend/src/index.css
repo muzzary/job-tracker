@@ -66,8 +66,96 @@
   /* Frosted top bar. Subtle inner highlight gives a real "glass edge" feel
      rather than a flat blur. */
   .glass {
-    @apply bg-moonlight/80 backdrop-blur-md
+    @apply bg-moonlight/70 backdrop-blur-xl
       shadow-[inset_0_-1px_0_rgba(19,24,27,0.06)];
+  }
+
+  /* Brand gradient text - used for the hero greeting name. */
+  .text-gradient {
+    @apply bg-gradient-to-r from-ateneo via-teal to-buckthorn bg-clip-text text-transparent;
+  }
+
+  /* Frosted card surface used by the redesigned stat tiles + hero. */
+  .glass-card {
+    @apply border border-white/60 bg-white/70 backdrop-blur-xl
+      shadow-[0_10px_30px_-12px_rgba(19,24,27,0.12)];
+  }
+}
+
+/* Animated "aurora" backdrop: a few oversized, blurred brand-colour blobs that
+   drift slowly behind the whole page. Pure CSS - no library, GPU-friendly
+   (only transform/opacity animate). */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+}
+.aurora::before,
+.aurora::after {
+  content: "";
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  will-change: transform;
+}
+.aurora::before {
+  top: -15%;
+  left: -10%;
+  width: 55vw;
+  height: 55vw;
+  background: radial-gradient(circle at center, rgba(0, 58, 108, 0.28), transparent 70%);
+  animation: aurora 18s ease-in-out infinite;
+}
+.aurora::after {
+  bottom: -20%;
+  right: -10%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle at center, rgba(14, 154, 167, 0.22), transparent 70%);
+  animation: aurora 22s ease-in-out infinite reverse;
+}
+
+/* A third warm blob, added as a real element so we can place a coral/amber glow
+   in the middle without a third pseudo-element. */
+.aurora-warm {
+  position: fixed;
+  top: 30%;
+  left: 45%;
+  width: 45vw;
+  height: 45vw;
+  z-index: -10;
+  border-radius: 9999px;
+  filter: blur(90px);
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(255, 191, 101, 0.20), transparent 70%);
+  animation: float 14s ease-in-out infinite;
+}
+
+/* Sheen overlay: a diagonal light streak that sweeps across a card. Add the
+   class to an absolutely-positioned span inside a relative, overflow-hidden box. */
+.shine-streak {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  animation: shine 5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before,
+  .aurora::after,
+  .aurora-warm,
+  .shine-streak {
+    animation: none;
   }
 }
 
@@ -93,6 +181,37 @@
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
+  }
+}
+
+/* Keyframes used by the raw CSS above (.aurora / .aurora-warm / .shine-streak).
+   Defined here too because Tailwind only emits theme keyframes when a matching
+   animate-* utility appears in the markup. */
+@keyframes aurora {
+  0%,
+  100% {
+    transform: translate(-8%, -6%) rotate(0deg);
+  }
+  50% {
+    transform: translate(8%, 6%) rotate(8deg);
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(0, -22px) scale(1.05);
+  }
+}
+@keyframes shine {
+  0% {
+    transform: translateX(-120%) skewX(-12deg);
+  }
+  60%,
+  100% {
+    transform: translateX(220%) skewX(-12deg);
   }
 }
 

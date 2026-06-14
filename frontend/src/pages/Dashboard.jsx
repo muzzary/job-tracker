@@ -150,18 +150,40 @@ export default function Dashboard() {
   const firstName = user?.name?.split(" ")[0] || "there";
   const hasAnyJobs = jobs.length > 0;
 
+  // Time-aware greeting + a friendly live date for the hero header.
+  const now = new Date();
+  const hour = now.getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const todayLabel = now.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
   return (
-    <div className="min-h-[100dvh]">
+    <div className="relative min-h-[100dvh]">
+      {/* Animated ambient backdrop (pure CSS, sits behind everything) */}
+      <div className="aurora" aria-hidden="true" />
+      <div className="aurora-warm" aria-hidden="true" />
+
       <Navbar onOpenResume={() => setResumeOpen(true)} />
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         {/* Header row: greeting + search + add */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-              Hi {firstName}, here's your search.
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="animate-fade-up">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-3 py-1 text-xs font-medium text-ink/60 backdrop-blur-sm">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-teal" />
+              </span>
+              {todayLabel}
+            </span>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+              {greeting}, <span className="text-gradient">{firstName}</span>
             </h1>
-            <p className="mt-1 text-sm text-ink/55">
+            <p className="mt-1.5 text-sm text-ink/55">
               Drag cards between columns to update where each application stands.
             </p>
           </div>
@@ -290,7 +312,7 @@ function BoardSkeleton() {
 // Shown if the jobs request fails - lets the user retry.
 function ErrorState({ message, onRetry }) {
   return (
-    <div className="rounded-xl2 border border-coral/30 bg-white p-10 text-center shadow-card">
+    <div className="rounded-xl2 border border-coral/30 glass-card p-10 text-center animate-fade-up">
       <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#FFE9E3] text-coral">
         <AlertIcon className="h-6 w-6" />
       </span>
@@ -308,12 +330,13 @@ function ErrorState({ message, onRetry }) {
 // Shown when the user has no jobs yet - a composed, inviting empty state.
 function EmptyState({ onAdd }) {
   return (
-    <div className="rounded-xl2 border border-dashed border-polar bg-white p-12 text-center shadow-card">
-      <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-ateneo-50 text-ateneo">
-        <BriefcaseIcon className="h-7 w-7" />
+    <div className="relative overflow-hidden rounded-xl2 glass-card p-12 text-center animate-fade-up">
+      <span className="shine-streak opacity-40" aria-hidden="true" />
+      <span className="relative mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-ateneo to-teal text-white shadow-lift">
+        <BriefcaseIcon className="h-8 w-8" />
       </span>
-      <h3 className="mt-5 text-lg font-bold text-ink">No applications yet</h3>
-      <p className="mx-auto mt-1.5 max-w-sm text-sm text-ink/55">
+      <h3 className="relative mt-5 text-xl font-bold text-ink">No applications yet</h3>
+      <p className="relative mx-auto mt-1.5 max-w-sm text-sm text-ink/55">
         Add the first job you're chasing. You can move it across the board as you
         hear back and progress through interviews.
       </p>

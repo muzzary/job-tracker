@@ -1,49 +1,82 @@
-import { STATUSES } from "../constants/jobStatus.js";
+import useCountUp from "../hooks/useCountUp.js";
+import { BriefcaseIcon, TrendingUpIcon, TrophyIcon, TargetIcon } from "./icons.jsx";
+
+// One headline metric tile: a colour-chipped icon, a count-up number, a label,
+// and a soft glow that lifts on hover. These give the dashboard its "at a glance"
+// wow before the detailed funnel below.
+function StatTile({ Icon, label, value, suffix = "", accent, delay = 0 }) {
+  const display = useCountUp(value);
+  return (
+    <div
+      className="group relative overflow-hidden rounded-xl2 glass-card p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lift animate-fade-up"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      {/* Decorative corner glow, brightens on hover */}
+      <div
+        className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full ${accent.blob} opacity-50 blur-2xl transition-opacity duration-300 group-hover:opacity-90`}
+      />
+
+      <span
+        className={`relative grid h-10 w-10 place-items-center rounded-xl ${accent.chip} shadow-sm`}
+      >
+        <Icon className="h-5 w-5" />
+      </span>
+
+      <p className="tabular mt-3.5 text-3xl font-semibold leading-none text-ink">
+        {display}
+        {suffix}
+      </p>
+      <p className="mt-1.5 text-xs font-medium text-ink/50">{label}</p>
+    </div>
+  );
+}
 
 export default function StatsBar({ jobs }) {
   const total = jobs.length;
   const countFor = (key) => jobs.filter((j) => j.status === key).length;
-  // Bars are scaled relative to the stage with the most applications
-  // so the widest bar fills the track and others are proportional to it.
-  const maxCount = Math.max(...STATUSES.map((s) => countFor(s.key)), 1);
+
+  const applied = countFor("Applied");
+  const interviewing = countFor("Interview");
+  const offers = countFor("Offer");
+  // "In progress" = live applications still moving through the pipeline.
+  const inProgress = applied + interviewing;
+  // "Response rate" = share of applications that earned an interview or offer.
+  const responded = interviewing + offers;
+  const responseRate = total ? Math.round((responded / total) * 100) : 0;
+
+  const tiles = [
+    {
+      Icon: BriefcaseIcon,
+      label: "Total applications",
+      value: total,
+      accent: { chip: "bg-ateneo-50 text-ateneo", blob: "bg-ateneo/30" },
+    },
+    {
+      Icon: TrendingUpIcon,
+      label: "In progress",
+      value: inProgress,
+      accent: { chip: "bg-[#FFF4DE] text-[#9a6b14]", blob: "bg-buckthorn/40" },
+    },
+    {
+      Icon: TrophyIcon,
+      label: "Offers",
+      value: offers,
+      accent: { chip: "bg-[#E2F4F5] text-teal", blob: "bg-teal/30" },
+    },
+    {
+      Icon: TargetIcon,
+      label: "Response rate",
+      value: responseRate,
+      suffix: "%",
+      accent: { chip: "bg-[#FFE9E3] text-[#c5523c]", blob: "bg-coral/30" },
+    },
+  ];
 
   return (
-    <div className="rounded-xl2 border border-polar/60 bg-white px-6 py-5 shadow-sm">
-      {/* Total headline */}
-      <div className="flex items-baseline gap-2.5">
-        <span className="tabular text-4xl font-semibold leading-none text-ink">{total}</span>
-        <span className="text-sm font-medium text-ink/45">applications</span>
-      </div>
-
-      <div className="my-4 h-px bg-polar/50" />
-
-      {/* Funnel rows */}
-      <div className="flex flex-col gap-2.5">
-        {STATUSES.map((s) => {
-          const count = countFor(s.key);
-          const barPct = (count / maxCount) * 100;
-          return (
-            <div key={s.key} className="flex items-center gap-3">
-              {/* Status label — fixed width so bars align */}
-              <div className="flex w-24 shrink-0 items-center gap-1.5">
-                <span className={`h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
-                <span className="text-xs font-medium text-ink/60">{s.label}</span>
-              </div>
-              {/* Horizontal bar */}
-              <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-polar/35">
-                <div
-                  className={`absolute inset-y-0 left-0 rounded-full ${s.bar} transition-all duration-700`}
-                  style={{ width: `${barPct}%` }}
-                />
-              </div>
-              {/* Count */}
-              <span className={`tabular w-7 shrink-0 text-right text-sm font-semibold ${s.text}`}>
-                {count}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 sm:gap-4">
+      {tiles.map((t, i) => (
+        <StatTile key={t.label} {...t} delay={i * 70} />
+      ))}
     </div>
   );
 }

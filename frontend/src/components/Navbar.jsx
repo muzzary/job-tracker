@@ -80,16 +80,27 @@ export default function Navbar({ onOpenResume }) {
 
               {/* Resume status + action */}
               <div className="px-2.5 py-2">
-                <div className="flex items-center gap-2 text-xs">
-                  <FileTextIcon className="h-4 w-4 text-ink/45" />
-                  {user?.hasResume ? (
-                    <span className="inline-flex items-center gap-1 font-medium text-teal">
-                      <CheckIcon className="h-3.5 w-3.5" /> Resume on file
-                    </span>
-                  ) : (
+                {user?.hasResume ? (
+                  <div className="flex items-start gap-2 text-xs">
+                    <FileTextIcon className="mt-0.5 h-4 w-4 shrink-0 text-teal" />
+                    <div className="min-w-0">
+                      <p
+                        className="truncate font-medium text-ink"
+                        title={user.resumeFileName || undefined}
+                      >
+                        {user.resumeFileName || "Resume on file"}
+                      </p>
+                      <span className="inline-flex items-center gap-1 text-teal">
+                        <CheckIcon className="h-3 w-3" /> On file
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-xs">
+                    <FileTextIcon className="h-4 w-4 text-ink/45" />
                     <span className="font-medium text-ink/55">No resume uploaded</span>
-                  )}
-                </div>
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={() => {
