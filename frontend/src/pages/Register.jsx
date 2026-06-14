@@ -10,15 +10,7 @@ import {
   EyeOffIcon,
   AlertIcon,
 } from "../components/icons.jsx";
-
-// Same error reader as the login page: the API returns { message } or
-// { errors: [{ msg }] }.
-function readError(err) {
-  const data = err?.response?.data;
-  if (data?.errors?.length) return data.errors[0].msg;
-  if (data?.message) return data.message;
-  return "Something went wrong. Please try again.";
-}
+import { readError } from "../utils/readError.js";
 
 export default function Register() {
   const { register } = useAuth();

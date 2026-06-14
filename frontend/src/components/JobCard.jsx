@@ -8,17 +8,7 @@ import {
   GripIcon,
   BotIcon,
 } from "./icons.jsx";
-
-function formatDate(value) {
-  if (!value) return "";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { formatDate } from "../utils/date.js";
 
 export default function JobCard({ job, index = 0, onEdit, onDelete, onMove, onScore, onRunAgent }) {
   const status = STATUS_MAP[job.status] || STATUS_MAP.Saved;

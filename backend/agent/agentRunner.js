@@ -19,7 +19,6 @@ export async function runAgent({ jobDescription, resumeText }) {
     interviewPrep: { content: null, reason: null },
     resumeTailor:  { content: null, reason: null },
   };
-  const steps = TOOLS.map(({ key }) => ({ step: 0, action: key }));
 
   await Promise.all(
     TOOLS.map(async ({ key, fn }) => {
@@ -31,6 +30,5 @@ export async function runAgent({ jobDescription, resumeText }) {
     })
   );
 
-  steps.push({ step: 1, action: "done" });
-  return { ...results, steps };
+  return results;
 }

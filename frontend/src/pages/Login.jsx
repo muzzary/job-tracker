@@ -3,15 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import AuthLayout from "../components/AuthLayout.jsx";
 import { MailIcon, LockIcon, EyeIcon, EyeOffIcon, AlertIcon } from "../components/icons.jsx";
-
-// Turn whatever the backend sent back into a single readable message.
-// The API returns either { message } or { errors: [{ msg }] }.
-function readError(err) {
-  const data = err?.response?.data;
-  if (data?.errors?.length) return data.errors[0].msg;
-  if (data?.message) return data.message;
-  return "Something went wrong. Please try again.";
-}
+import { readError } from "../utils/readError.js";
 
 export default function Login() {
   const { login } = useAuth();

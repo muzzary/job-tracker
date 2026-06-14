@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import useEscapeKey from "../hooks/useEscapeKey.js";
 import { AlertIcon } from "./icons.jsx";
 
 // A small reusable confirmation modal, used before destructive actions like
@@ -13,12 +13,7 @@ export default function ConfirmDialog({
   loading = false,
 }) {
   // Allow Escape to cancel.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => e.key === "Escape" && onCancel();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onCancel]);
+  useEscapeKey(onCancel, open);
 
   if (!open) return null;
 

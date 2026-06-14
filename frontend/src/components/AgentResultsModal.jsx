@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios.js";
 import useBodyScrollLock from "../hooks/useBodyScrollLock.js";
+import useEscapeKey from "../hooks/useEscapeKey.js";
 import {
   CloseIcon,
   AlertIcon,
@@ -66,7 +67,7 @@ export default function AgentResultsModal({ job, onClose }) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("coverLetter");
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState("idle"); // "idle" | "ok" | "fail"
   const [isRerun, setIsRerun] = useState(false);
 
   useBodyScrollLock(!!job);
@@ -88,12 +89,11 @@ export default function AgentResultsModal({ job, onClose }) {
     }
   };
 
+  useEscapeKey(onClose, !!job);
+
   useEffect(() => {
     if (!job) return;
     runAgent();
-    const onKey = (e) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
   }, [job]);
 
   if (!job) return null;
@@ -103,9 +103,14 @@ export default function AgentResultsModal({ job, onClose }) {
 
   const handleCopy = async () => {
     if (!activeContent) return;
-    await navigator.clipboard.writeText(activeContent);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      // clipboard API rejects in insecure contexts or if permission is denied.
+      await navigator.clipboard.writeText(activeContent);
+      setCopyState("ok");
+    } catch {
+      setCopyState("fail");
+    }
+    setTimeout(() => setCopyState("idle"), 2000);
   };
 
   const handleDownload = () => {
@@ -175,7 +180,7 @@ export default function AgentResultsModal({ job, onClose }) {
                   <button
                     key={key}
                     type="button"
-                    onClick={() => { setActiveTab(key); setCopied(false); }}
+                    onClick={() => { setActiveTab(key); setCopyState("idle"); }}
                     className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                       activeTab === key
                         ? "bg-white text-ink shadow-sm"
@@ -199,10 +204,15 @@ export default function AgentResultsModal({ job, onClose }) {
                         onClick={handleCopy}
                         className="flex items-center gap-1.5 rounded-lg border border-polar bg-white px-2.5 py-1.5 text-xs font-medium text-ink/60 shadow-sm transition-all hover:border-ateneo/40 hover:text-ateneo"
                       >
-                        {copied ? (
+                        {copyState === "ok" ? (
                           <>
                             <CheckIcon className="h-3.5 w-3.5 text-teal" />
                             <span className="text-teal">Copied</span>
+                          </>
+                        ) : copyState === "fail" ? (
+                          <>
+                            <AlertIcon className="h-3.5 w-3.5 text-coral" />
+                            <span className="text-coral">Failed</span>
                           </>
                         ) : (
                           <>

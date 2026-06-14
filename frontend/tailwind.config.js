@@ -51,47 +51,20 @@ export default {
           "0%": { opacity: "0", transform: "scale(0.97)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
-        shimmer: {
-          "100%": { transform: "translateX(100%)" },
-        },
-        // Gentle drift for the ambient background blobs - gives the page life
-        // without a heavy animation. Vary duration/delay per blob with arbitrary
-        // utilities (e.g. [animation-duration:11s]).
-        float: {
-          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
-          "50%": { transform: "translate(0, -22px) scale(1.05)" },
-        },
-        // Slow pan of an oversized gradient for the animated "aurora" backdrop.
-        aurora: {
-          "0%, 100%": { transform: "translate(-8%, -6%) rotate(0deg)" },
-          "50%": { transform: "translate(8%, 6%) rotate(8deg)" },
-        },
-        // Light sweep used on hero / stat cards for a premium sheen.
-        shine: {
-          "0%": { transform: "translateX(-120%) skewX(-12deg)" },
-          "60%, 100%": { transform: "translateX(220%) skewX(-12deg)" },
-        },
         // Soft breathing glow for "live"/accent dots and rings.
         "pulse-glow": {
           "0%, 100%": { opacity: "1", transform: "scale(1)" },
           "50%": { opacity: "0.55", transform: "scale(1.12)" },
         },
-        // Tiny rise used to pop numbers/badges in.
-        "pop-in": {
-          "0%": { opacity: "0", transform: "scale(0.8) translateY(6px)" },
-          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
-        },
+        // Note: the aurora/float/shine/shimmer keyframes are defined directly in
+        // index.css because they drive raw-CSS classes (.aurora, .shine-streak,
+        // .skeleton), not Tailwind `animate-*` utilities.
       },
       animation: {
         // Used for staggered card reveals and modal entrance.
         "fade-up": "fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both",
         "scale-in": "scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both",
-        // Slow ambient drift for decorative background blobs.
-        float: "float 9s ease-in-out infinite",
-        aurora: "aurora 18s ease-in-out infinite",
-        shine: "shine 5s ease-in-out infinite",
         "pulse-glow": "pulse-glow 2.4s ease-in-out infinite",
-        "pop-in": "pop-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both",
       },
     },
   },

@@ -184,9 +184,10 @@
   }
 }
 
-/* Keyframes used by the raw CSS above (.aurora / .aurora-warm / .shine-streak).
-   Defined here too because Tailwind only emits theme keyframes when a matching
-   animate-* utility appears in the markup. */
+/* Keyframes for the raw-CSS animation classes above (.aurora / .aurora-warm /
+   .shine-streak) and .skeleton below. These are plain CSS animations, not
+   Tailwind `animate-*` utilities, so their keyframes live here rather than in
+   tailwind.config.js. */
 @keyframes aurora {
   0%,
   100% {
