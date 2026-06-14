@@ -81,6 +81,15 @@ const jobSchema = new mongoose.Schema({
     type: Date,
   },
 
+  // Cached AI agent output. Populated on the first run and served instantly on
+  // repeat opens. Re-run with force:true to refresh after the job description changes.
+  agentResults: {
+    coverLetter:   { content: String, reason: String },
+    interviewPrep: { content: String, reason: String },
+    resumeTailor:  { content: String, reason: String },
+    generatedAt:   Date,
+  },
+
   // When this job record was created.
   createdAt: {
     type: Date,

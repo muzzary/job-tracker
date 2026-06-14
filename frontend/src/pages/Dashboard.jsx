@@ -7,6 +7,7 @@ import KanbanBoard from "../components/KanbanBoard.jsx";
 import AddJobModal from "../components/AddJobModal.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import AIMatcherModal from "../components/AIMatcherModal.jsx";
+import AgentResultsModal from "../components/AgentResultsModal.jsx";
 import ResumeModal from "../components/ResumeModal.jsx";
 import { PlusIcon, SearchIcon, BriefcaseIcon, AlertIcon } from "../components/icons.jsx";
 import { STATUSES } from "../constants/jobStatus.js";
@@ -29,8 +30,9 @@ export default function Dashboard() {
   const [pendingDelete, setPendingDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  // AI matcher + resume modals.
+  // AI matcher, agent assistant, and resume modals.
   const [matcherJob, setMatcherJob] = useState(null);
+  const [agentJob, setAgentJob] = useState(null);
   const [resumeOpen, setResumeOpen] = useState(false);
 
   // A tiny transient message for background failures (e.g. a drag that didn't
@@ -117,6 +119,9 @@ export default function Dashboard() {
 
   // Open the AI matcher for a job.
   const openMatcher = (job) => setMatcherJob(job);
+
+  // Open the AI agent assistant for a job.
+  const openAgent = (job) => setAgentJob(job);
 
   // When the AI returns a score, update that job in our state (so the card badge
   // and stats reflect it) and keep the open matcher in sync.
@@ -206,6 +211,7 @@ export default function Dashboard() {
                   onMove={moveJob}
                   onAdd={openAdd}
                   onScore={openMatcher}
+                  onRunAgent={openAgent}
                 />
               </div>
               {/* If a search hides everything, say so. */}
@@ -252,6 +258,9 @@ export default function Dashboard() {
         onUploadResume={() => setResumeOpen(true)}
       />
 
+      {/* AI agent assistant */}
+      <AgentResultsModal job={agentJob} onClose={() => setAgentJob(null)} />
+
       {/* Resume upload (also opened from the navbar) */}
       <ResumeModal open={resumeOpen} onClose={() => setResumeOpen(false)} />
     </div>
@@ -262,7 +271,7 @@ export default function Dashboard() {
 function BoardSkeleton() {
   return (
     <div>
-      <div className="skeleton h-[88px] w-full rounded-xl2" />
+      <div className="skeleton h-52 w-full rounded-xl2" />
       <div className="mt-6 flex gap-4 overflow-hidden">
         {STATUSES.map((s) => (
           <div key={s.key} className="w-[280px] shrink-0">

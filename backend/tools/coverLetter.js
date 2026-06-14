@@ -6,7 +6,10 @@ export async function draftCoverLetter({ jobDescription, resumeText }) {
       role: "system",
       content:
         "You are a professional cover letter writer. You only use information from the " +
-        "candidate's real resume — never invent experience, employers, or skills they do not have.",
+        "candidate's real resume — never invent experience, employers, or skills they do not have. " +
+        "If the job explicitly says no cover letter is needed, or it is not a standard application " +
+        "(e.g. a take-home test spec, referral form), respond with exactly: " +
+        "NOT_NEEDED: <one-sentence reason>. Otherwise write the letter.",
     },
     {
       role: "user",
@@ -16,5 +19,14 @@ export async function draftCoverLetter({ jobDescription, resumeText }) {
         `Return only the letter text, no commentary.`,
     },
   ];
-  return callOpenRouter(messages);
+  const raw = await callOpenRouter(messages, 1500);
+  return parseToolResponse(raw);
+}
+
+function parseToolResponse(raw) {
+  const trimmed = (raw ?? "").trim();
+  if (trimmed.startsWith("NOT_NEEDED:")) {
+    return { content: null, reason: trimmed.slice("NOT_NEEDED:".length).trim() };
+  }
+  return { content: trimmed, reason: null };
 }

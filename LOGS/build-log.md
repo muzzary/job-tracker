@@ -333,3 +333,150 @@ rate-limited -> "the free tier is busy, try again"; timeout -> friendly message.
 ---
 
 <!-- Add the next phase/entry below this line using the same format. -->
+
+---
+
+## Phase 7 — AI Agent with Tool Calling (Steps 1–6)
+
+**Goal:** Upgrade JobTracker from a single-shot AI call to a real multi-step AI agent.
+Given a job description and the user's resume, the agent decides which of three tools
+to call — cover letter drafter, interview prep generator, resume tailor — based on the
+situation. All branching logic lives in the model's reasoning, not in application code.
+
+### What was built
+
+| File | What it does |
+|------|--------------|
+| `backend/tools/coverLetter.js` | `draftCoverLetter()` — tailored cover letter grounded in real resume |
+| `backend/tools/interviewPrep.js` | `generateInterviewPrep()` — 10–15 interview questions with talking points |
+| `backend/tools/resumeTailor.js` | `tailorResume()` — concrete edits to match the job, no fabrication |
+| `backend/agent/toolSchemas.js` | OpenAI-format tool schemas for the 3 tools |
+| `backend/agent/agentRunner.js` | `callAgentModel()` + `runAgent()` — the agent loop |
+| `backend/routes/agentRoutes.js` | `POST /run` behind JWT auth |
+| `backend/controllers/agentController.js` | Loads job + resume from DB, runs agent, returns result |
+| `backend/tests/agent.test.js` | 5 automated tests with mocked LLM |
+
+### How & why — decision by decision
+
+**1. Tools built as plain functions first, agent loop second.**
+*Why:* Each tool can be tested in isolation before the loop is written. If the loop
+breaks, you know the tools themselves work. This is the Phase 7 build rule: don't
+touch the agent loop until all three tools work independently.
+
+**2. Tools reuse the existing `callOpenRouter` from `aiController.js`.**
+*Why:* The model fallback list, timeout, and error handling already exist there. Adding
+`export` to `callOpenRouter` was the only change needed — zero duplication.
+
+**3. Agent has its own `callAgentModel` separate from `callOpenRouter`.**
+*Why:* The agent call is fundamentally different — it passes `tools` and `tool_choice`
+to the API and needs the full message object back (not just text) so the loop can read
+`tool_calls`. The two functions serve different purposes.
+
+**4. Tool schemas have no parameters.**
+*Why:* The job description and resume are already in the agent's context window. The
+LLM just names which tool to call; the runner supplies the data. Empty parameters keep
+the schemas simple and avoid asking the model to pass data it already has.
+
+**5. All branching logic lives in the model — no `if score < X` in the code.**
+*Why:* This is the definition of a real agent vs. a fake pipeline. If you write
+`if resume_matches: skip_tailor_tool`, YOU made the decision, not the LLM. The agent
+was tested with a mismatched ML engineer JD and correctly decided to skip all tools
+and warn the user — without any conditional in `agentRunner.js`.
+
+**6. Hard step cap + graceful tool failure + step logging.**
+*Why:* Free-tier models are unreliable. The step cap prevents infinite loops. Wrapping
+each tool call in try/catch means one tool failing doesn't crash the whole agent run.
+The `steps` array is returned in the response — it's the interview evidence of agent
+reasoning.
+
+**7. Provider fallback: primary → fallback model, same API key.**
+*Why:* Both `meta-llama/llama-3.3-70b-instruct:free` and `openai/gpt-oss-120b:free`
+are on OpenRouter. Same key, different model families = independent rate limits. When
+the primary is rate-limited, the fallback has capacity.
+
+**8. Honesty guardrail in every tool prompt.**
+*Why:* The tools must only use information from the user's real resume. Every system
+prompt explicitly states this. This is a non-negotiable design decision — fabricating
+experience in a job application tool would be harmful.
+
+**9. `global.fetch` mocked in tests — real LLM never called during `npm test`.**
+*Why:* Real API calls in tests would consume rate-limited free-tier credits on every
+CI run, add 30–60 seconds of latency, and make tests flaky. The mock proves the
+routing and error handling work without touching the LLM.
+
+### How it was verified
+- Each tool tested in isolation via `test-tools.js` — cover letter returned correctly. ✅
+- Agent loop tested via `test-agent.js`:
+  - React Developer JD → all 3 tools called, all outputs returned. ✅
+  - Senior ML Engineer JD → agent warned about gap, skipped all tools. ✅
+- `POST /api/agent/run` tested live via curl — 200 with coverLetter, interviewPrep,
+  steps (resumeTailor skipped by agent as resume already matched well). ✅
+- `npm test` → 20/20 tests passing, all existing tests green. ✅
+
+### Done this phase (Steps 1–6)
+- ✅ 3 tool functions, tool schemas, agent loop, backend endpoint, 5 automated tests.
+- Steps remaining: Step 7 (frontend modal + Run Assistant button), Step 8 (deploy + docs).
+
+---
+
+## Phase 7 (cont.) — Frontend & Refinements (Steps 7–7.5)
+
+**Goal:** Put the agent in front of the user, then refine it based on real use.
+
+### What was built
+
+| File | What it does |
+|------|--------------|
+| `frontend/src/components/AgentResultsModal.jsx` | Modal that runs the agent and shows the three results in tabs, with loading / error / empty states, copy + download buttons, and a Re-run button |
+| `frontend/src/components/JobCard.jsx` | "Run AI assistant" action + a low-match nudge button |
+| `frontend/src/components/icons.jsx` | `BotIcon`, `DownloadIcon` |
+| `KanbanBoard.jsx`, `KanbanColumn.jsx`, `StatsBar.jsx`, `Dashboard.jsx` | Thread the `onRunAgent` handler from the dashboard down to each card |
+| `backend/models/Job.js` | `agentResults` subdocument — caches the agent output on the job |
+| `backend/controllers/agentController.js` | Serves the cache, or runs the agent and saves it (`force: true` to refresh) |
+
+### How & why — decision by decision
+
+**1. Skipped tools now explain themselves (`NOT_NEEDED: <reason>`).**
+*Why:* A blank "not needed" panel looked like a bug. Each tool prompt can now reply
+`NOT_NEEDED: <reason>`, parsed into `{ content, reason }`, so the UI shows *why* the
+agent skipped a step (e.g. "Your resume already covers this role's requirements").
+
+**2. Agent results are cached on the job.**
+*Why:* Re-opening a job shouldn't burn a rate-limited free-tier call every time. The
+first run saves to `Job.agentResults`; later opens return instantly. A Re-run button
+sends `force: true` to refresh after the job description changes.
+
+**3. `max_tokens` is per-call, not a fixed 700.**
+*Why:* 700 tokens truncated longer cover letters. Each tool now sets its own limit
+(1500–2500). The free-model fallback list was widened to survive daily quota resets.
+
+**4. The matcher score now reflects the WHOLE posting.**
+*Why:* The original matcher scored skills (and skill-derived keywords) only — so a
+fresh grad could score high on a role demanding "3+ years". The prompt now weighs
+skills, **experience level**, education, domain keywords/responsibilities, and explicit
+soft requirements together into one honest overall score. Experience gaps and missing
+degrees can now appear in `missingSkills` too.
+
+**5. Interview prep is rigorous and honest — no sugar-coating.**
+*Why:* Prep that flatters the candidate doesn't prepare them. The coach now asks the
+hard, probing questions a tough interviewer actually asks, targets gaps and shallow
+experience, and names weak talking points plainly with what to fix. The "only real
+resume content, never fabricate" guardrail stays.
+
+**6. Small UX touches that connect the two AI features.**
+*Why:* A job that scored low (<60) now shows a "Low match — get help applying →" nudge
+that opens the agent, so the Phase 5 matcher and Phase 7 agent feel like one workflow.
+The skipped-tool state uses a reassuring teal checkmark instead of an error look, and
+each result can be downloaded as a `.txt` for pasting into application portals.
+
+### How it was verified
+- Drove the agent against real jobs in the DB: a "3 years required" role for a fresh
+  grad correctly produced a cover letter and interview prep but the agent **declined**
+  to tailor the resume — the intended honest behaviour. ✅
+- `npm test` → 20/20 passing. ✅
+- `npm run build` (frontend) compiles cleanly. ✅
+
+### Done
+- ✅ Frontend agent modal, result caching, NOT_NEEDED reasons, holistic matcher,
+  rigorous interview prep, and the match-score → agent connection.
+- Remaining: Step 8 — deploy (Railway + Vercel), final README, demo.
