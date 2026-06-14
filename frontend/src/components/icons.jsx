@@ -155,6 +155,31 @@ export const UploadIcon = ({ className = "w-5 h-5" }) => (
   </svg>
 );
 
+// Upward trend line — used for the "in progress / active pipeline" stat.
+export const TrendingUpIcon = ({ className = "w-5 h-5" }) => (
+  <svg className={className} {...base}>
+    <path d="M3 17l6-6 4 4 8-8" />
+    <path d="M17 7h4v4" />
+  </svg>
+);
+
+// Trophy — used for the "offers" stat.
+export const TrophyIcon = ({ className = "w-5 h-5" }) => (
+  <svg className={className} {...base}>
+    <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z" />
+    <path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3" />
+  </svg>
+);
+
+// Target — used for the "response rate" stat.
+export const TargetIcon = ({ className = "w-5 h-5" }) => (
+  <svg className={className} {...base}>
+    <circle cx="12" cy="12" r="9" />
+    <circle cx="12" cy="12" r="5" />
+    <circle cx="12" cy="12" r="1.5" />
+  </svg>
+);
+
 export const DownloadIcon = ({ className = "w-5 h-5" }) => (
   <svg className={className} {...base}>
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />

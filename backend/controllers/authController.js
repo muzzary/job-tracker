@@ -21,6 +21,7 @@ const toPublicUser = (user) => ({
   name: user.name,
   email: user.email,
   hasResume: Boolean(user.resume),
+  resumeFileName: user.resumeFileName || "",
   resumeUpdatedAt: user.resumeUpdatedAt || null,
 });
 

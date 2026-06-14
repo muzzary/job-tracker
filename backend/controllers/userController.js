@@ -62,6 +62,7 @@ export const uploadResume = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     user.resume = text;
+    user.resumeFileName = req.file.originalname;
     user.resumeUpdatedAt = new Date();
     await user.save();
 
@@ -82,13 +83,16 @@ export const uploadResume = async (req, res) => {
 // preview / "you uploaded a resume on ..." state.
 export const getResume = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("resume resumeUpdatedAt");
+    const user = await User.findById(req.user.id).select(
+      "resume resumeFileName resumeUpdatedAt"
+    );
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
     res.json({
       hasResume: Boolean(user.resume),
       resume: user.resume || "",
+      resumeFileName: user.resumeFileName || "",
       resumeUpdatedAt: user.resumeUpdatedAt || null,
     });
   } catch (error) {
