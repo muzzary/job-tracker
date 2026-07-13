@@ -33,6 +33,8 @@ logs/
 .idea/
 .DS_Store
 Thumbs.db
+*.swp
+*.tmp
 
 # Misc
 coverage/
