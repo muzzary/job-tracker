@@ -218,4 +218,4 @@ together with environment-specific CORS, showed me the gap between "works locall
 
 ## License
 
-MIT
+Released under the [MIT License](LICENSE).
