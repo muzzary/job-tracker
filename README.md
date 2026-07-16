@@ -6,7 +6,7 @@ A full-stack MERN app that helps job seekers **track applications on a Kanban bo
 ![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)
 ![JWT](https://img.shields.io/badge/Auth-JWT-000000?logo=jsonwebtokens&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-20%20passing-brightgreen)
+[![CI](https://github.com/muzzary/job-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/muzzary/job-tracker/actions/workflows/ci.yml)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
 > **Live demo:** https://job-tracker-muzzary.vercel.app
