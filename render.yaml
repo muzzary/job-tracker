@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: job-tracker-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: google/gemma-4-31b-it:free,meta-llama/llama-3.3-70b-instruct:free,qwen/qwen3-coder:free
+      - key: OPENROUTER_FALLBACK_MODEL
+        value: openai/gpt-oss-120b:free
+      - key: AGENT_MAX_STEPS
+        value: "10"
+      - key: CLIENT_URL
+        sync: false
