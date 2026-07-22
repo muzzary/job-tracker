@@ -22,13 +22,10 @@ const MODELS = (
   process.env.OPENROUTER_MODEL ||
   [
     "google/gemma-4-31b-it:free",
-    "meta-llama/llama-3.3-70b-instruct:free",
-    "deepseek/deepseek-chat-v3-0324:free",
-    "mistralai/devstral-small:free",
-    "microsoft/phi-4-reasoning-plus:free",
-    "qwen/qwen3-coder:free",
-    "tngtech/deepseek-r1t-chimera:free",
-    "liquid/lfm-2.5-1.2b-instruct:free",
+    "nvidia/nemotron-3-super-120b-a12b:free",
+    "openai/gpt-oss-20b:free",
+    "nvidia/nemotron-3-nano-30b-a3b:free",
+    "nvidia/nemotron-nano-9b-v2:free",
   ].join(",")
 )
   .split(",")
