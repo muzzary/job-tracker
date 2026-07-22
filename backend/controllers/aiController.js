@@ -147,6 +147,7 @@ export const callOpenRouter = async (messages, maxTokens = 700) => {
     } catch (err) {
       lastError = err;
       // Try the next model on rate-limit / not-found / server errors.
+      console.error(`[AI] ${model} failed (status ${err.status}): ${err.message}`);
     }
   }
   const e = new Error(
